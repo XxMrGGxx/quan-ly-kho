@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block page_title %}Báo cáo & Phân tích{% endblock %}
+
+{% block content %}
+<!-- Bộ lọc báo cáo -->
+<div class="card" style="margin-bottom: 1rem;">
+    <div class="card-header" style="flex-direction: column; align-items: stretch; gap: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Bộ lọc báo cáo</span>
+            <div class="flex gap-2">
+                <button class="btn btn-sm btn-outline" onclick="setDatePreset('today')">Hôm nay</button>
+                <button class="btn btn-sm btn-outline" onclick="setDatePreset('week')">Tuần</button>
+                <button class="btn btn-sm btn-outline" onclick="setDatePreset('month')">Tháng</button>
+                <button class="btn btn-sm btn-outline" onclick="setDatePreset('year')">Năm</button>
+                <button class="btn btn-success" onclick="exportReport()">Xuất Excel</button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 1rem;">
+        <div class="report-filter" role="group" aria-label="Bộ lọc báo cáo">
+            <div class="field">
+                <label>Từ ngày</label>
+                <input type="date" id="start_date" class="input" onchange="onFilterChange()">
+            </div>
+            <div class="field">
+                <label>Đến ngày</label>
+                <input type="date" id="end_date" class="input" onchange="onFilterChange()">
+            </div>
+            <div class="field">
+                <label>Kho</label>
+                <select id="warehouse_id" class="input" onchange="onFilterChange()">
+                    <option value="">Tất cả kho</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Loại báo cáo</label>
+                <select id="report_type" class="input" onchange="switchReport()">
+                    <option value="inventory">Tồn kho</option>
+                    <option value="sales">Doanh thu</option>
+                    <option value="import">Nhập hàng</option>
+                    <option value="export">Xuất hàng</option>
+                    <option value="top">Thống kê top</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Người lập phiếu xuất</label>
+                <select id="created_by" class="input" onchange="onFilterChange()">
+                    <option value="">Tất cả</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab nội dung báo cáo -->
+<div class="card">
+    <div class="card-header flex gap-1">
+        <button class="tab-btn active" data-tab="inventory" onclick="switchTab('inventory')">Tồn kho</button>
+        <button class="tab-btn" data-tab="sales" onclick="switchTab('sales')">Doanh thu</button>
+        <button class="tab-btn" data-tab="import" onclick="switchTab('import')">Nhập hàng</button>
+        <button class="tab-btn" data-tab="export" onclick="switchTab('export')">Xuất hàng</button>
+        <button class="tab-btn" data-tab="top" onclick="switchTab('top')">Thống kê top</button>
+    </div>
+    <div class="card-body" style="padding: 0; max-height: 500px; overflow-y: auto;" id="report-content">
+        <!-- Fragment được load vào đây -->
+        <div class="text-center" style="padding:20px;color:#94a3b8;"><i>Chọn bộ lọc và tab báo cáo để xem dữ liệu</i></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.tab-btn { padding: 8px 16px; background: none; border: none; cursor: pointer; font-size: 14px; color: #64748b; border-bottom: 2px solid transparent; }
+.tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 500; }
+.report-filter { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.report-filter .field { flex: 1; min-width: 160px; max-width: 200px; }
+.report-filter .field label { display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; font-weight: 600; }
+.report-filter .actions { display: flex; gap: 10px; flex-shrink: 0; }
+.report-filter .actions .btn { height: 36px; }
+@media (max-width: 1100px) { .report-filter .field { min-width: 140px; } }
+@media (max-width: 768px) {
+    .report-filter { flex-direction: column; align-items: stretch; }
+    .report-filter .field,
+    .report-filter .actions { max-width: none; }
+    .report-filter .actions { justify-content: flex-start; }
+}
+.report-table { width: 100%; border-collapse: collapse; }
+.report-table th, .report-table td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 13px; }
+.report-table th { background: #f8fafc; font-weight: 600; position: sticky; top: 0; z-index: 1; }
+.report-table tfoot td { background: #f1f5f9; font-weight: 600; }
+.simple-table { width: 100%; border-collapse: collapse; }
+.simple-table th, .simple-table td { padding: 7px 8px; border: 1px solid #e2e8f0; text-align: left; }
+.simple-table th { background: #f8fafc; }
+@media (max-width: 768px) {
+    .report-table, .report-table thead, .report-table tbody, .report-table th, .report-table td, .report-table tr { display: block; }
+    .report-table thead { display: none; }
+    .report-table tr { margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; background: #fff; }
+    .report-table td { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border: none; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .report-table td:last-child { border-bottom: 0; }
+    .report-table td::before { content: attr(data-label); font-weight: 600; color: #475569; margin-right: 8px; }
+    .simple-table, .simple-table thead, .simple-table tbody, .simple-table th, .simple-table td, .simple-table tr { display: block; }
+    .simple-table thead { display: none; }
+    .simple-table tr { margin-bottom: 10px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; background: #fff; }
+    .simple-table td { display: flex; justify-content: space-between; padding: 4px 0; border: none; border-bottom: 1px solid #f1f5f9; }
+    .simple-table td:last-child { border-bottom: 0; }
+    .simple-table td::before { content: attr(data-label); font-weight: 600; color: #475569; margin-right: 6px; }
+}
+</style>
+<script>
+let currentTab = 'inventory';
+const today = new Date();
+
+window.reportFilters = {};
+
+function syncFilters() {
+    window.reportFilters = {
+        start_date: document.getElementById('start_date').value,
+        end_date: document.getElementById('end_date').value,
+        warehouse_id: document.getElementById('warehouse_id').value,
+        created_by: document.getElementById('created_by').value,
+    };
+}
+
+function onFilterChange() {
+    syncFilters();
+    loadReport();
+}
+
+function setDateRange(start, end) {
+    document.getElementById('start_date').value = start;
+    document.getElementById('end_date').value = end;
+}
+
+function setDatePreset(preset) {
+    var y = today.getFullYear();
+    var m = today.getMonth();
+    switch(preset) {
+        case 'today':
+            setDateRange(formatDate(today), formatDate(today));
+            break;
+        case 'week':
+            var ws = new Date(today);
+            var day = ws.getDay();
+            ws.setDate(ws.getDate() - ((day + 6) % 7));
+            setDateRange(formatDate(ws), formatDate(today));
+            break;
+        case 'month':
+            setDateRange(formatDate(new Date(y, m, 1)), formatDate(today));
+            break;
+        case 'year':
+            setDateRange(formatDate(new Date(y, 0, 1)), formatDate(today));
+            break;
+    }
+    onFilterChange();
+}
+
+function formatDate(date) {
+    return date.toISOString().split('T')[0];
+}
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelector('[data-tab="'+tab+'"]').classList.add('active');
+    document.getElementById('report_type').value = tab;
+    loadReport();
+}
+
+function switchReport() {
+    switchTab(document.getElementById('report_type').value);
+}
+
+function loadReport() {
+    var f = window.reportFilters;
+    if (!f.start_date || !f.end_date) return;
+    var container = document.getElementById('report-content');
+    container.innerHTML = '<div class="text-center" style="padding:20px;color:#94a3b8;"><i>Đang tải...</i></div>';
+    var url = '/api/reports/fragment/' + currentTab;
+    fetch(url)
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+            container.innerHTML = html;
+            // Execute inline scripts trong fragment
+            container.querySelectorAll('script').forEach(function(oldScript) {
+                var ns = document.createElement('script');
+                ns.textContent = oldScript.textContent;
+                if (oldScript.src) ns.src = oldScript.src;
+                oldScript.parentNode.replaceChild(ns, oldScript);
+            });
+        })
+        .catch(function(e) {
+            container.innerHTML = '<div class="text-center" style="padding:20px;color:#dc2626;">Lỗi tải báo cáo: ' + e.message + '</div>';
+        });
+}
+
+async function loadWarehouses() {
+    try {
+        var data = await window.WMS.api('/warehouses');
+        var sel = document.getElementById('warehouse_id');
+        if (data && data.items) {
+            data.items.forEach(function(w) {
+                sel.innerHTML += '<option value="'+w.id+'">'+window.WMS.escapeHtml(w.name)+'</option>';
+            });
+        }
+    } catch(e) { console.error(e); }
+}
+
+async function loadUsers() {
+    try {
+        var data = await window.WMS.api('/auth/users').catch(function() { return null; });
+        var sel = document.getElementById('created_by');
+        if (data && data.items) {
+            data.items.forEach(function(u) {
+                sel.innerHTML += '<option value="'+u.id+'">'+window.WMS.escapeHtml(u.full_name || u.username || '')+'</option>';
+            });
+        }
+    } catch(e) { console.error(e); }
+}
+
+async function exportReport() {
+    var start = document.getElementById('start_date').value;
+    var end = document.getElementById('end_date').value;
+    var type = currentTab;
+    if (type === 'export') type = 'export_orders';
+    if (type === 'top') { window.WMS.showToast('Thống kê top không hỗ trợ xuất Excel', true); return; }
+    if (!start || !end) {
+        window.WMS.showToast('Vui lòng chọn ngày trước khi xuất Excel', true);
+        return;
+    }
+    var token = localStorage.getItem('wms_token');
+    var createdBy = document.getElementById('created_by').value;
+    var createdByParam = createdBy ? '&created_by=' + createdBy : '';
+    var url = '/api/reports/export?report_type=' + type + '&start_date=' + start + '&end_date=' + end + createdByParam;
+    try {
+        var resp = await fetch(url, {
+            method: 'GET',
+            headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+            credentials: 'include'
+        });
+        if (!resp.ok) throw new Error('Xuất thất bại');
+        var blob = await resp.blob();
+        var dlUrl = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = dlUrl;
+        a.download = 'bao_cao_' + type + '_' + start + '_' + end + '.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(dlUrl);
+    } catch(e) {
+        console.error(e);
+        window.WMS.showToast('Có lỗi khi xuất Excel', true);
+    }
+}
+
+// Initialize
+setDateRange(formatDate(today), formatDate(today));
+syncFilters();
+loadWarehouses();
+loadUsers();
+setTimeout(function() { loadReport(); }, 300);
+</script>
+{% endblock %}

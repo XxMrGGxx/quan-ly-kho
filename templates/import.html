@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block page_title %}Nhập kho{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="flex" style="justify-content:space-between;align-items:center;gap:12px;width:100%;">
+            <span>Danh sách phiếu nhập kho</span>
+            <div class="flex gap-2" style="align-items:flex-end;">
+                <button class="btn btn-success" onclick="exportSelectedToExcel()">Xuất file</button>
+                <button class="btn btn-primary" onclick="window.location.href='/import/new'">+ Tạo phiếu nhập</button>
+            </div>
+        </div>
+    </div>
+<div class="card-body" style="padding:0;">
+         <table class="responsive-table">
+             <thead>
+                  <tr>
+                    <th style="width:44px;">
+                        <input type="checkbox" id="select_all" onclick="toggleSelectAll(this)" />
+                    </th>
+                    <th data-label="Mã">Mã phiếu</th>
+                    <th data-label="NCC">Nhà cung cấp</th>
+                    <th data-label="Ngày">Ngày nhập</th>
+                    <th data-label="NLP">Người lập</th>
+                    <th data-label="TT">Trạng thái</th>
+                    <th data-label="Tổng">Tổng tiền</th>
+                    <th data-label="HĐ">Hành động</th>
+                  </tr>
+             </thead>
+             <tbody id="table-body"></tbody>
+         </table>
+     </div>
+</div>
+
+
+<script src="/static/js/import.js"></script>
+{% endblock %}

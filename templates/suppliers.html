@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block page_title %}Quản lý Nhà cung cấp{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="flex gap-2 flex-wrap" style="flex-wrap:wrap;">
+            <input type="text" id="search" class="input" placeholder="Tìm kiếm..." style="min-width:200px; font-size:16px;">
+        </div>
+        <button class="btn btn-primary" onclick="openSupplierModal()">+ Thêm mới</button>
+    </div>
+<div class="card-body" style="padding:0;">
+         <table class="responsive-table">
+             <thead>
+                 <tr><th data-label="Mã">Mã NCC</th><th data-label="Tên">Tên nhà cung cấp</th><th data-label="ĐT">Điện thoại</th><th data-label="Email">Email</th><th data-label="Địa chỉ">Địa chỉ</th><th data-label="Nợ">Công nợ</th><th data-label="HĐ">Hành động</th></tr>
+             </thead>
+             <tbody id="table-body"></tbody>
+         </table>
+     </div>
+</div>
+
+<!-- Modal Thêm/Sửa Nhà cung cấp -->
+<div id="supplierModal" class="modal-overlay">
+    <div class="modal-content" style="width:min(92vw,500px);">
+        <div class="modal-header">
+            <h3 id="modalTitle">🏢 Thêm nhà cung cấp</h3>
+            <button class="modal-close-btn" onclick="closeSupplierModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="supplierForm">
+                <div style="margin-bottom:12px;">
+                    <label>Tên nhà cung cấp *</label>
+                    <input type="text" id="sup_name" class="input" required>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Người liên hệ</label>
+                    <input type="text" id="sup_contact" class="input">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Điện thoại</label>
+                    <input type="text" id="sup_phone" class="input">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Email</label>
+                    <input type="email" id="sup_email" class="input">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Địa chỉ</label>
+                    <textarea id="sup_address" class="input" rows="2"></textarea>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Thành phố</label>
+                    <input type="text" id="sup_city" class="input">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Mã số thuế</label>
+                    <input type="text" id="sup_tax" class="input">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Số tài khoản ngân hàng</label>
+                    <input type="text" id="sup_bank_account" class="input">
+                </div>
+                <div class="modal-footer" style="padding:0;margin-top:20px;border:none;background:none;">
+                    <button type="button" class="btn btn-secondary" onclick="closeSupplierModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentSupplierId = null;
+
+    async function loadSuppliers() {
+        const search = document.getElementById('search').value;
+        const data = await window.WMS.api(`/suppliers?search=${search}`);
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = '';
+        if(data && data.items) {
+            data.items.forEach(s => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td data-label="Mã">${window.WMS.escapeHtml(s.code || '-')}</td>
+                        <td data-label="Tên">${window.WMS.escapeHtml(s.name || '-')}</td>
+                        <td data-label="ĐT">${window.WMS.escapeHtml(s.phone || '-')}</td>
+                        <td data-label="Email">${window.WMS.escapeHtml(s.email || '-')}</td>
+                        <td data-label="Địa chỉ">${window.WMS.escapeHtml(s.address || '-')}</td>
+                        <td data-label="Nợ">${new Intl.NumberFormat('vi-VN').format(window.WMS.safeNumber(s.current_debt))} đ</td>
+                        <td data-label="HĐ">
+                            <button class="btn btn-secondary btn-sm" onclick="editSupplier(${s.id})">Sửa</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteSupplier(${s.id})">Xóa</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    function openSupplierModal(supplier = null) {
+        if(supplier) {
+            document.getElementById('modalTitle').innerText = '✏️ Sửa nhà cung cấp';
+            document.getElementById('sup_name').value = supplier.name;
+            document.getElementById('sup_contact').value = supplier.contact_person || '';
+            document.getElementById('sup_phone').value = supplier.phone || '';
+            document.getElementById('sup_email').value = supplier.email || '';
+            document.getElementById('sup_address').value = supplier.address || '';
+            document.getElementById('sup_city').value = supplier.city || '';
+            document.getElementById('sup_tax').value = supplier.tax_code || '';
+            document.getElementById('sup_bank_account').value = supplier.bank_account || '';
+            currentSupplierId = supplier.id;
+        } else {
+            document.getElementById('modalTitle').innerText = '🏢 Thêm nhà cung cấp';
+            document.getElementById('supplierForm').reset();
+            currentSupplierId = null;
+        }
+        window.WMS.openModal('supplierModal');
+    }
+
+    function closeSupplierModal() {
+        window.WMS.closeModal('supplierModal');
+    }
+
+    async function editSupplier(id) {
+        const data = await window.WMS.api(`/suppliers`);
+        const supplier = data.items.find(s => s.id === id);
+        if(supplier) openSupplierModal(supplier);
+    }
+
+    async function deleteSupplier(id) {
+        const confirmed = await window.WMS.confirm('Bạn có chắc chắn muốn xóa nhà cung cấp này?');
+        if (confirmed) {
+            await window.WMS.api(`/suppliers/${id}`, 'DELETE');
+            loadSuppliers();
+            window.WMS.showToast('Đã xóa nhà cung cấp');
+        }
+    }
+
+    document.getElementById('supplierForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const supplierData = {
+            name: document.getElementById('sup_name').value,
+            contact_person: document.getElementById('sup_contact').value,
+            phone: document.getElementById('sup_phone').value,
+            email: document.getElementById('sup_email').value,
+            address: document.getElementById('sup_address').value,
+            city: document.getElementById('sup_city').value,
+            tax_code: document.getElementById('sup_tax').value,
+            bank_account: document.getElementById('sup_bank_account').value
+        };
+        
+        let url = '/suppliers';
+        let method = 'POST';
+        if(currentSupplierId) {
+            url = `/suppliers/${currentSupplierId}`;
+            method = 'PUT';
+        }
+        
+        const result = await window.WMS.api(url, method, supplierData);
+        if(result) {
+            closeSupplierModal();
+            loadSuppliers();
+            window.WMS.showToast(currentSupplierId ? 'Cập nhật thành công' : 'Thêm nhà cung cấp thành công');
+        }
+    });
+
+    // Auto filter suppliers as user types (debounce to limit API calls)
+    const searchInput = document.getElementById('search');
+
+    if (searchInput) {
+        let t = null;
+        searchInput.addEventListener('input', (e) => {
+            if (t) clearTimeout(t);
+            const value = e.target.value;
+            t = setTimeout(() => {
+                // loadSuppliers() reads current input value itself
+                // loadSuppliers() reads current input value itself
+                loadSuppliers();
+            }, 300);
+        });
+    }
+
+    loadSuppliers();
+</script>
+{% endblock %}

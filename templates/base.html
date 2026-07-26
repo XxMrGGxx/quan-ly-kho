@@ -1,0 +1,282 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>{% block title %}WMS - An Tín Solution{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/modal.css">
+    {% block extra_css %}{% endblock %}
+    
+    <script src="/static/js/base.js?v=20260725"></script>
+    <script src="/static/app.js?v=20260725"></script>
+</head>
+<body>
+    <!-- Sidebar overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    
+    <aside class="sidebar" id="sidebar">
+        <a href="/index" class="brand">
+            <img src="/static/company-logo.svg" alt="Logo" class="brand-badge" style="object-fit:cover;padding:4px;background:#fff;">
+            <div class="brand-copy collapse-hide">
+                <div class="brand-title">An Tín WMS</div>
+                <div class="brand-subtitle">Warehouse Management</div>
+                <div class="brand-ip" id="brand-ip"></div>
+            </div>
+        </a>
+        <nav class="nav">
+            <div class="nav-section">
+                <div class="nav-section-title collapse-hide">Tổng quan</div>
+                <a href="/index" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}" title="Tổng quan hệ thống">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/>
+                        <rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Dashboard</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title collapse-hide">Nghiệp vụ</div>
+                <a href="/import" class="nav-item {% if active_page == 'import' %}active{% endif %}" title="Nhập kho">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Nhập kho</span>
+                </a>
+                
+                <a href="/export" class="nav-item {% if active_page == 'export' %}active{% endif %}" title="Xuất kho phi thương mại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Xuất hàng</span>
+                </a>
+                <a href="/inventory" class="nav-item {% if active_page == 'inventory' %}active{% endif %}" title="Quản lý tồn kho">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Tồn kho</span>
+                </a>
+                
+                <a href="/sales-entry" class="nav-item {% if active_page == 'sales_entry' %}active{% endif %}" title="Tạo đơn hàng nhanh cho Salesman">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Tạo đơn nhanh</span>
+                </a>
+                <a href="/sales-map" class="nav-item {% if active_page == 'sales_map' %}active{% endif %}" title="Bản đồ theo dõi nhân viên Sale">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Bản đồ Sale</span>
+                </a>
+                <a href="/reports" class="nav-item {% if active_page == 'reports' %}active{% endif %}" title="Báo cáo thống kê">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                        <line x1="2" y1="20" x2="22" y2="20"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Báo cáo</span>
+                </a>
+                <a href="/debt" class="nav-item {% if active_page == 'debt' %}active{% endif %}" title="Quản lý công nợ">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/>
+                        <line x1="15" y1="3" x2="15" y2="21"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Công nợ</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title collapse-hide">Quản lý danh mục</div>
+                <a href="/products" class="nav-item {% if active_page == 'products' %}active{% endif %}" title="Quản lý danh mục hàng hóa">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Hàng hóa</span>
+                </a>
+                <a href="/customers" class="nav-item {% if active_page == 'customers' %}active{% endif %}" title="Quản lý thông tin khách hàng">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Khách hàng</span>
+                </a>
+                <a href="/suppliers" class="nav-item {% if active_page == 'suppliers' %}active{% endif %}" title="Quản lý nhà cung cấp">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-4l-3 9H9l-3-9H2"/><path d="M5.5 3h13l1.5 3H4L5.5 3z"/>
+                        <path d="M9 12l1 3h4l1-3"/><path d="M12 3v9"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Nhà cung cấp</span>
+                </a>
+                <a href="/warehouses" class="nav-item {% if active_page == 'warehouses' %}active{% endif %}" title="Quản lý sơ đồ kho, khu vực và vị trí">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                        <line x1="18" y1="7" x2="18" y2="7.01"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Kho bãi</span>
+                </a>
+                <a href="/users" class="nav-item {% if active_page == 'users' %}active{% endif %}" title="Quản lý người dùng và phân quyền">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        <path d="M18 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Người dùng</span>
+                </a>
+
+                {# Chỉ admin mới thấy mục Cài đặt #}
+                <a href="/settings" id="nav-settings" class="nav-item {% if active_page == 'settings' %}active{% endif %} nav-settings" title="Cài đặt">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span class="nav-label collapse-hide">Cài đặt</span>
+                </a>
+            </div>
+        </nav>
+        <div class="nav-footer">
+            <div class="license-footer" id="license-footer">
+                <span class="license-footer-indicator" id="license-indicator"></span>
+                <a href="/license" class="license-footer-link collapse-hide" id="license-footer-link">
+                <span class="license-footer-text collapse-hide" id="license-footer-text">Đang kiểm tra...</span>
+                </a>
+            </div>
+        </div>
+        <!-- Collapse toggle button -->
+        <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" onclick="toggleSidebarCollapse()" title="Ẩn / Hiện sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/>
+            </svg>
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+
+            <div class="page-title-ad-wrapper">
+                <div class="page-title-container">
+                    <button class="sidebar-show-btn" id="sidebar-show-btn" onclick="toggleSidebarCollapse()" title="Hiện sidebar" style="display:none;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/>
+                        </svg>
+                    </button>
+                    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" title="Mở menu">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <h2 id="page-title" class="page-title">{% block page_title %}Dashboard{% endblock %}</h2>
+                </div>
+                <div id="ad-banner" class="ad-banner ad-banner--header" style="display:none;">
+                    <div class="ad-banner-inner">
+                        <span class="ad-banner-icon">AD</span>
+                        <div class="ad-banner-text-wrapper">
+                            <span class="ad-banner-text" id="ad-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="user-info-header">
+                    <div class="user-avatar-sm" id="header-avatar">A</div>
+                    <div class="user-details">
+                        <div class="user-name" id="header-user-name">Admin</div>
+                        <div class="user-role" id="header-user-role">System operator</div>
+                    </div>
+                </div>
+                <button class="btn-poweroff" onclick="window.WMS.logout()" title="Đăng xuất">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+
+        <div id="license-warning-banner" style="display:none;background:#fffbeb;border-bottom:2px solid #f59e0b;padding:8px 24px;text-align:center;font-size:0.85rem;color:#92400e;">
+            <span id="license-warning-text"></span>
+            <a href="/license" style="color:#2563eb;text-decoration:underline;font-weight:600;margin-left:8px;">Xem chi tiết</a>
+        </div>
+        <div id="license-expired-banner" style="display:none;background:#fef2f2;border-bottom:2px solid #dc2626;padding:8px 24px;text-align:center;font-size:0.85rem;color:#dc2626;font-weight:600;">
+            <span id="license-expired-text"></span>
+            <a href="/license" style="color:#dc2626;text-decoration:underline;font-weight:600;margin-left:8px;">Kích hoạt ngay</a>
+        </div>
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container" class="toast-container"></div>
+    </main>
+
+    <script src="/static/js/modal.js"></script>
+    {% block scripts %}{% endblock %}
+    
+    <script>
+    // ===== ADVERTISEMENT BANNER =====
+    async function loadAds() {
+        const banner = document.getElementById('ad-banner');
+        const adText = document.getElementById('ad-text');
+        if (!banner || !adText) return;
+
+        try {
+            // Add cache-busting parameter to prevent browser cache
+            const cacheBuster = new Date().getTime();
+            const resp = await fetch(`/static/ads.txt?t=${cacheBuster}`);
+            if (!resp.ok) return;
+            const text = await resp.text();
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) return;
+
+            banner.style.display = 'flex';
+            
+            // Shuffle array to randomize order
+            const shuffled = [...lines].sort(() => Math.random() - 0.5);
+            
+            
+            const selectedAds = shuffled;
+            let currentIndex = 0;
+
+            const effects = [
+                { enter: 'active', exit: 'exit', mode: 'slide' },
+                { enter: 'active fade-in', exit: 'fade-out', mode: 'fade' },
+                { enter: 'active zoom-in', exit: 'zoom-out', mode: 'zoom' },
+                { enter: 'active blur-in', exit: 'blur-out', mode: 'blur' }
+            ];
+
+            function applyEffectAndRender(text) {
+                const effect = effects[Math.floor(Math.random() * effects.length)];
+                adText.className = 'ad-banner-text';
+                adText.textContent = text;
+                void adText.offsetWidth; // Force reflow
+                adText.className = `ad-banner-text ${effect.enter}`;
+                adText.dataset.effect = effect.mode;
+            }
+
+            function showNextAd() {
+                const effect = effects[Math.floor(Math.random() * effects.length)];
+                adText.className = `ad-banner-text ${effect.exit}`;
+                
+                setTimeout(() => {
+                    currentIndex = (currentIndex + 1) % selectedAds.length;
+                    applyEffectAndRender(selectedAds[currentIndex]);
+                }, 400);
+            }
+
+            // Show first ad
+            applyEffectAndRender(selectedAds[0]);
+
+            // Rotate every 6 seconds (slower, more comfortable)
+            setInterval(showNextAd, 6000);
+        } catch (e) {
+            console.error('Ad banner error:', e);
+        }
+    }
+
+    // Load ads after page ready with slight delay
+    setTimeout(() => { loadAds(); }, 300);
+    </script>
+</body>
+</html>

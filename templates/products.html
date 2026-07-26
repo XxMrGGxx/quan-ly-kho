@@ -1,0 +1,923 @@
+{% extends "base.html" %}
+{% block page_title %}Quản lý Hàng hóa{% endblock %}
+
+{% block content %}
+<!-- Tabs -->
+<div class="card" style="margin-bottom:0; border-bottom-left-radius:0; border-bottom-right-radius:0;">
+    <div class="card-header" style="padding:0; border-bottom:none;">
+        <div style="display:flex; gap:0;">
+            <button class="tab-btn active" data-tab="tab-products" onclick="switchTab('tab-products')" style="padding:12px 24px; border:none; background:var(--primary); color:white; cursor:pointer; font-weight:600; border-radius:8px 8px 0 0; font-size:14px;">📦 Hàng hóa</button>
+            <button class="tab-btn" data-tab="tab-units" onclick="switchTab('tab-units')" style="padding:12px 24px; border:none; background:#f1f5f9; color:#64748b; cursor:pointer; font-weight:500; border-radius:8px 8px 0 0; font-size:14px; transition:all 0.2s;">📐 Đơn vị tính</button>
+            <button class="tab-btn" data-tab="tab-categories" onclick="switchTab('tab-categories')" style="padding:12px 24px; border:none; background:#f1f5f9; color:#64748b; cursor:pointer; font-weight:500; border-radius:8px 8px 0 0; font-size:14px; transition:all 0.2s;">📂 Nhóm mặt hàng</button>
+        </div>
+    </div>
+</div>
+
+<!-- Tab: Hàng hóa -->
+<div id="tab-products" class="tab-content">
+    <div class="card" style="border-top-left-radius:0;">
+        <div class="card-header">
+            <div class="flex gap-2" style="flex:1;">
+                <input type="text" id="search" class="input" placeholder="🔍 Tìm kiếm sản phẩm..." 
+                       style="width: 300px;" onkeyup="searchProducts()">
+            </div>
+            <button class="btn btn-primary" onclick="openProductModal()">+ Thêm mới</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div style="overflow-x: auto;">
+                <table style="width:100%" class="responsive-table">
+                    <thead>
+                        <tr>
+                            <th data-label="Mã">Mã</th><th data-label="Tên">Tên sản phẩm</th><th data-label="ĐVT">Đơn vị</th><th data-label="Tồn">Tồn kho</th>
+                            <th data-label="Giá vốn">Giá vốn</th><th data-label="Giá bán">Giá bán</th><th data-label="CK">% CK</th><th data-label="Giá CK">Giá sau CK</th><th data-label="Min">Tồn tối thiểu</th><th data-label="HĐ">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <tr><td colspan="10" style="text-align:center;">Đang tải......</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="padding: 16px; text-align: center;" id="pagination"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab: Đơn vị tính -->
+<div id="tab-units" class="tab-content" style="display:none;">
+    <div class="card">
+        <div class="card-header">
+            <div class="flex gap-2" style="flex:1;">
+                <input type="text" id="unit-search" class="input" placeholder="🔍 Tìm kiếm đơn vị tính..." 
+                       style="width: 300px;" onkeyup="searchUnits()">
+            </div>
+            <button class="btn btn-primary" onclick="openUnitModal()">+ Thêm đơn vị</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div style="overflow-x: auto;">
+                <table style="width:100%" class="responsive-table">
+                    <thead>
+                        <tr>
+                            <th data-label="Mã">Mã</th><th data-label="Tên">Tên đơn vị</th><th data-label="Mô tả">Mô tả</th><th data-label="HĐ">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="unit-table-body">
+                        <tr><td colspan="4" style="text-align:center;">Đang tải......</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="padding: 16px; text-align: center;" id="unit-pagination"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab: Nhóm mặt hàng -->
+<div id="tab-categories" class="tab-content" style="display:none;">
+    <div class="card">
+        <div class="card-header">
+            <div class="flex gap-2" style="flex:1;">
+                <input type="text" id="cat-search" class="input" placeholder="🔍 Tìm kiếm nhóm mặt hàng..." 
+                       style="width: 300px;" onkeyup="searchCategories()">
+            </div>
+            <button class="btn btn-primary" onclick="openCategoryModal()">+ Thêm nhóm</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div style="overflow-x: auto;">
+                <table style="width:100%" class="responsive-table">
+                    <thead>
+                        <tr>
+                            <th data-label="Mã">Mã</th><th data-label="Tên">Tên nhóm</th><th data-label="Cha">Nhóm cha</th><th data-label="Mô tả">Mô tả</th><th data-label="HĐ">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cat-table-body">
+                        <tr><td colspan="5" style="text-align:center;">Đang tải......</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="padding: 16px; text-align: center;" id="cat-pagination"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa Sản phẩm (modernized) -->
+<div id="productModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">📦 Thêm sản phẩm mới</h3>
+            <button class="modal-close-btn" onclick="closeProductModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="productForm">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label>Mã sản phẩm</label>
+                        <input type="text" id="code" class="input" placeholder="Tự động sinh">
+                        <small style="color:#666;">Để trống để tự động sinh</small>
+                    </div>
+                    <div>
+                        <label>Barcode</label>
+                        <input type="text" id="barcode" class="input" placeholder="Mã vạch">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom:12px;">
+                    <label>Tên sản phẩm <span style="color:red;">*</span></label>
+                    <input type="text" id="name" class="input" required>
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label>Kho <span style="color:red;">*</span></label>
+                        <select id="warehouse_id" class="input" required>
+                            <option value="">-- Chọn kho --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Danh mục</label>
+                        <select id="category_id" class="input">
+                            <option value="">-- Chọn danh mục --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label>Đơn vị tính</label>
+                        <select id="unit_id" class="input">
+                            <option value="">-- Chọn đơn vị --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label>Giá vốn</label>
+                        <input type="number" id="cost_price" class="input" value="0" step="0.01">
+                    </div>
+                    <div>
+                        <label>Giá bán</label>
+                        <input type="number" id="selling_price" class="input" value="0" step="0.01">
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label>% Chiết khấu</label>
+                        <input type="number" id="discount_rate" class="input" value="0" step="0.01" min="0" max="100">
+                    </div>
+                    <div>
+                        <label>Giá sau CK</label>
+                        <input type="text" id="effective_price" class="input" value="0" readonly>
+                        <small style="color:#666;">Tự tính từ Giá bán và % CK</small>
+                    </div>
+                </div>
+                
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label>Tồn kho tối thiểu</label>
+                        <input type="number" id="min_stock" class="input" value="5">
+                    </div>
+                    <div>
+                        <label>Tồn kho tối đa</label>
+                        <input type="number" id="max_stock" class="input" value="100">
+                    </div>
+                </div>
+                
+                <div style="margin-bottom:12px;">
+                    <label>Mô tả</label>
+                    <textarea id="description" class="input" rows="2" placeholder="Mô tả sản phẩm..."></textarea>
+                </div>
+                
+                <div style="margin-bottom:12px;">
+                    <label>Thông số kỹ thuật</label>
+                    <textarea id="specifications" class="input" rows="2" placeholder="Thông số kỹ thuật..."></textarea>
+                </div>
+                
+                <div class="modal-footer" style="padding:0;margin-top:20px;border:none;background:none;">
+                    <button type="button" class="btn btn-secondary" onclick="closeProductModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Lưu sản phẩm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa Đơn vị tính (modernized) -->
+<div id="unitModal" class="modal-overlay">
+    <div class="modal-content" style="width:min(92vw,500px);">
+        <div class="modal-header">
+            <h3 id="unitModalTitle">📐 Thêm đơn vị tính mới</h3>
+            <button class="modal-close-btn" onclick="closeUnitModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="unitForm">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label>Mã đơn vị <span style="color:red;">*</span></label>
+                        <input type="text" id="unit_code" class="input" placeholder="VD: PCS, KG, L" required>
+                    </div>
+                    <div>
+                        <label>Tên đơn vị <span style="color:red;">*</span></label>
+                        <input type="text" id="unit_name" class="input" placeholder="VD: Cái, Kilogram, Lít" required>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Mô tả</label>
+                    <textarea id="unit_description" class="input" rows="2" placeholder="Mô tả đơn vị tính..."></textarea>
+                </div>
+                <div class="modal-footer" style="padding:0;margin-top:20px;border:none;background:none;">
+                    <button type="button" class="btn btn-secondary" onclick="closeUnitModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="unitSubmitBtn">Lưu đơn vị</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa Nhóm mặt hàng (modernized) -->
+<div id="catModal" class="modal-overlay">
+    <div class="modal-content" style="width:min(92vw,550px);">
+        <div class="modal-header">
+            <h3 id="catModalTitle">📂 Thêm nhóm mặt hàng mới</h3>
+            <button class="modal-close-btn" onclick="closeCategoryModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="catForm">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label>Mã nhóm <span style="color:red;">*</span></label>
+                        <input type="text" id="cat_code" class="input" placeholder="VD: ELEC, MECH" required>
+                    </div>
+                    <div>
+                        <label>Tên nhóm <span style="color:red;">*</span></label>
+                        <input type="text" id="cat_name" class="input" placeholder="VD: Điện - Điện tử" required>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Nhóm cha</label>
+                    <select id="cat_parent_id" class="input">
+                        <option value="">-- Không có (nhóm gốc) --</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Mô tả</label>
+                    <textarea id="cat_description" class="input" rows="2" placeholder="Mô tả nhóm mặt hàng..."></textarea>
+                </div>
+                <div class="modal-footer" style="padding:0;margin-top:20px;border:none;background:none;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCategoryModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary" id="catSubmitBtn">Lưu nhóm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========== TAB SWITCHING ==========
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.style.background = '#f1f5f9';
+        btn.style.color = '#64748b';
+        btn.style.fontWeight = '500';
+    });
+    document.getElementById(tabId).style.display = '';
+    const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+    if (activeBtn) {
+        activeBtn.style.background = 'var(--primary)';
+        activeBtn.style.color = 'white';
+        activeBtn.style.fontWeight = '600';
+    }
+}
+
+// ========== PRODUCT TAB ==========
+let currentProductId = null;
+let searchTimeout = null;
+
+async function loadProducts(search = '', page = 0) {
+    const limit = 20;
+    const url = `/products?search=${encodeURIComponent(search)}&limit=${limit}&offset=${page * limit}`;
+    
+    try {
+        const data = await window.WMS.api(url);
+        const tbody = document.getElementById('table-body');
+        
+        if(data && data.items) {
+            if(data.items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Không tìm thấy sản phẩm</td></tr>';
+            } else {
+                tbody.innerHTML = '';
+                data.items.forEach(p => {
+                    const stock = window.WMS.safeNumber(p.stock);
+                    const minStock = window.WMS.safeNumber(p.min_stock);
+                    const stockClass = stock <= minStock ? 'badge-warning' : '';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td data-label="Mã"><strong>${window.WMS.escapeHtml(p.code)}</strong></td>
+                            <td data-label="Tên">
+                                <strong>${window.WMS.escapeHtml(p.name)}</strong>
+                                ${p.category_name ? `<br><small style="color:#666;">${window.WMS.escapeHtml(p.category_name)}</small>` : ''}
+                            </td>
+                            <td data-label="ĐVT">${window.WMS.escapeHtml(p.unit_name || '-')}</td>
+                            <td data-label="Tồn"><span class="badge ${stockClass}">${stock}</span></td>
+                            <td data-label="Giá vốn">${new Intl.NumberFormat('vi-VN').format(window.WMS.safeNumber(p.cost_price))} đ</td>
+                            <td data-label="Giá bán">${new Intl.NumberFormat('vi-VN').format(window.WMS.safeNumber(p.selling_price))} đ</td>
+                            <td data-label="CK">${window.WMS.safeNumber(p.discount_rate)}%</td>
+                            <td data-label="Giá CK">${new Intl.NumberFormat('vi-VN').format(calcEffectivePrice(p.selling_price, p.discount_rate))} đ</td>
+                            <td data-label="Min">${minStock}</td>
+                            <td data-label="HĐ">
+                                <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">✏️</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            const totalPages = Math.ceil(window.WMS.safeNumber(data.total) / limit);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            if(totalPages > 1) {
+                for(let i = 0; i < totalPages; i++) {
+                    const btn = document.createElement('button');
+                    btn.innerText = i + 1;
+                    btn.className = i === page ? 'btn btn-primary' : 'btn btn-secondary';
+                    btn.style.margin = '0 5px';
+                    btn.style.padding = '5px 10px';
+                    btn.onclick = () => loadProducts(search, i);
+                    pagination.appendChild(btn);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Load products error:', error);
+        document.getElementById('table-body').innerHTML = '<tr><td colspan="10" style="text-align:center;color:red;">Lỗi tải dữ liệu</td></tr>';
+    }
+}
+
+function calcEffectivePrice(sellingPrice, discountRate) {
+    const price = window.WMS.safeNumber(sellingPrice);
+    const rate = Math.max(0, Math.min(100, window.WMS.safeNumber(discountRate)));
+    return price * (1 - rate / 100);
+}
+
+function updateEffectivePricePreview() {
+    const sellingPrice = parseFloat(document.getElementById('selling_price')?.value || 0);
+    const discountRate = parseFloat(document.getElementById('discount_rate')?.value || 0);
+    const effective = calcEffectivePrice(sellingPrice, discountRate);
+    const input = document.getElementById('effective_price');
+    if (input) {
+        input.value = new Intl.NumberFormat('vi-VN').format(effective);
+    }
+}
+
+function searchProducts() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        const search = document.getElementById('search').value;
+        loadProducts(search, 0);
+    }, 200);
+}
+
+async function loadCategories() {
+    try {
+        const data = await window.WMS.api('/products/categories/all');
+        const select = document.getElementById('category_id');
+        select.innerHTML = '<option value="">-- Chọn danh mục --</option>';
+        if(data && data.items) {
+            data.items.forEach(cat => {
+                select.innerHTML += window.WMS.optionHtml(cat.id, `${cat.name || '-'} (${cat.code || '-'})`);
+            });
+        }
+    } catch (error) {
+        console.error('Load categories error:', error);
+    }
+}
+
+async function loadUnits() {
+    try {
+        const data = await window.WMS.api('/products/units/all');
+        const select = document.getElementById('unit_id');
+        select.innerHTML = '<option value="">-- Chọn đơn vị --</option>';
+        if(data && data.items) {
+            data.items.forEach(unit => {
+                select.innerHTML += window.WMS.optionHtml(unit.id, `${unit.name || '-'} (${unit.code || '-'})`);
+            });
+        }
+    } catch (error) {
+        console.error('Load units error:', error);
+    }
+}
+
+function openProductModal(product = null) {
+    document.getElementById('productForm').reset();
+    document.getElementById('code').value = '';
+    document.getElementById('barcode').value = '';
+    document.getElementById('name').value = '';
+    document.getElementById('description').value = '';
+    document.getElementById('specifications').value = '';
+    document.getElementById('cost_price').value = '0';
+    document.getElementById('selling_price').value = '0';
+    document.getElementById('discount_rate').value = '0';
+    document.getElementById('effective_price').value = '0';
+    document.getElementById('min_stock').value = '5';
+    document.getElementById('max_stock').value = '100';
+    
+    if(product) {
+        document.getElementById('modalTitle').innerText = '📦 Sửa sản phẩm';
+        document.getElementById('code').value = product.code;
+        document.getElementById('barcode').value = product.barcode || '';
+        document.getElementById('name').value = product.name;
+        document.getElementById('warehouse_id').value = product.warehouse_id || '';
+        document.getElementById('category_id').value = product.category_id || '';
+        document.getElementById('unit_id').value = product.unit_id || '';
+        document.getElementById('description').value = product.description || '';
+        document.getElementById('specifications').value = product.specifications || '';
+        document.getElementById('min_stock').value = product.min_stock || 0;
+        document.getElementById('max_stock').value = product.max_stock || 0;
+        document.getElementById('cost_price').value = product.cost_price || 0;
+        document.getElementById('selling_price').value = product.selling_price || 0;
+        document.getElementById('discount_rate').value = product.discount_rate || 0;
+        document.getElementById('effective_price').value = new Intl.NumberFormat('vi-VN').format(calcEffectivePrice(product.selling_price, product.discount_rate));
+        currentProductId = product.id;
+    } else {
+        document.getElementById('modalTitle').innerText = '📦 Thêm sản phẩm mới';
+        currentProductId = null;
+    }
+    updateEffectivePricePreview();
+    window.WMS.openModal('productModal');
+}
+
+function closeProductModal() {
+    window.WMS.closeModal('productModal');
+    currentProductId = null;
+}
+
+async function editProduct(id) {
+    try {
+        const data = await window.WMS.api(`/products/${id}`);
+        if(data) {
+            openProductModal(data);
+        } else {
+            window.WMS.showToast('Không thể tải thông tin sản phẩm');
+        }
+    } catch (error) {
+        console.error('Edit product error:', error);
+        window.WMS.showToast('Lỗi khi tải thông tin sản phẩm');
+    }
+}
+
+async function deleteProduct(id) {
+    const confirmed = await window.WMS.confirm('Bạn có chắc chắn muốn xóa sản phẩm này?');
+    if (confirmed) {
+        try {
+            const result = await window.WMS.api(`/products/${id}`, 'DELETE');
+            if(result) {
+                window.WMS.showToast('Đã xóa sản phẩm');
+                loadProducts();
+            }
+        } catch (error) {
+            console.error('Delete product error:', error);
+            window.WMS.showToast('Lỗi khi xóa sản phẩm');
+        }
+    }
+}
+
+document.getElementById('productForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+        window.WMS.showToast('Vui lòng nhập tên sản phẩm', true);
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Đang xử lý...';
+    
+    const warehouseId = document.getElementById('warehouse_id').value;
+    if (!warehouseId) {
+        window.WMS.showToast('Vui lòng chọn kho cho sản phẩm', true);
+        return;
+    }
+    
+    const productData = {
+        code: document.getElementById('code').value || null,
+        barcode: document.getElementById('barcode').value || null,
+        name: name,
+        warehouse_id: parseInt(warehouseId),
+        category_id: parseInt(document.getElementById('category_id').value) || null,
+        unit_id: parseInt(document.getElementById('unit_id').value) || null,
+        description: document.getElementById('description').value,
+        specifications: document.getElementById('specifications').value,
+        min_stock: parseFloat(document.getElementById('min_stock').value) || 0,
+        max_stock: parseFloat(document.getElementById('max_stock').value) || 0,
+        cost_price: parseFloat(document.getElementById('cost_price').value) || 0,
+        selling_price: parseFloat(document.getElementById('selling_price').value) || 0,
+        discount_rate: parseFloat(document.getElementById('discount_rate').value) || 0
+    };
+    
+    let url = '/products';
+    let method = 'POST';
+    
+    if (currentProductId) {
+        url = `/products/${currentProductId}`;
+        method = 'PUT';
+    }
+    
+    try {
+        const result = await window.WMS.api(url, method, productData);
+        if (result) {
+            closeProductModal();
+            loadProducts();
+            window.WMS.showToast(currentProductId ? 'Cập nhật sản phẩm thành công' : 'Thêm sản phẩm thành công');
+        }
+    } catch (error) {
+        console.error('Save product error:', error);
+        window.WMS.showToast('Lỗi khi lưu sản phẩm: ' + (error.message || 'Unknown error'), true);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Lưu sản phẩm';
+    }
+});
+
+document.getElementById('selling_price')?.addEventListener('input', updateEffectivePricePreview);
+document.getElementById('discount_rate')?.addEventListener('input', updateEffectivePricePreview);
+
+// ========== UNITS TAB ==========
+let currentUnitId = null;
+let unitSearchTimeout = null;
+
+async function loadUnitsTable(search = '', page = 0) {
+    const limit = 20;
+    const url = `/products/units?search=${encodeURIComponent(search)}&limit=${limit}&offset=${page * limit}`;
+    
+    try {
+        const data = await window.WMS.api(url);
+        const tbody = document.getElementById('unit-table-body');
+        
+        if(data && data.items) {
+            if(data.items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Không tìm thấy đơn vị tính</td></tr>';
+            } else {
+                tbody.innerHTML = '';
+                data.items.forEach(u => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td data-label="Mã"><strong>${window.WMS.escapeHtml(u.code)}</strong></td>
+                            <td data-label="Tên">${window.WMS.escapeHtml(u.name)}</td>
+                            <td data-label="Mô tả">${window.WMS.escapeHtml(u.description || '-')}</td>
+                            <td data-label="HĐ">
+                                <button class="btn btn-secondary btn-sm" onclick="editUnit(${u.id})">✏️</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteUnit(${u.id})">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            const totalPages = Math.ceil(window.WMS.safeNumber(data.total) / limit);
+            const pagination = document.getElementById('unit-pagination');
+            pagination.innerHTML = '';
+            if(totalPages > 1) {
+                for(let i = 0; i < totalPages; i++) {
+                    const btn = document.createElement('button');
+                    btn.innerText = i + 1;
+                    btn.className = i === page ? 'btn btn-primary' : 'btn btn-secondary';
+                    btn.style.margin = '0 5px';
+                    btn.style.padding = '5px 10px';
+                    btn.onclick = () => loadUnitsTable(search, i);
+                    pagination.appendChild(btn);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Load units error:', error);
+        document.getElementById('unit-table-body').innerHTML = '<tr><td colspan="4" style="text-align:center;color:red;">Lỗi tải dữ liệu</td></tr>';
+    }
+}
+
+function searchUnits() {
+    clearTimeout(unitSearchTimeout);
+    unitSearchTimeout = setTimeout(() => {
+        const search = document.getElementById('unit-search').value;
+        loadUnitsTable(search, 0);
+    }, 200);
+}
+
+function openUnitModal(unit = null) {
+    document.getElementById('unitForm').reset();
+    
+    if(unit) {
+        document.getElementById('unitModalTitle').innerText = '📐 Sửa đơn vị tính';
+        document.getElementById('unit_code').value = unit.code;
+        document.getElementById('unit_name').value = unit.name;
+        document.getElementById('unit_description').value = unit.description || '';
+        currentUnitId = unit.id;
+    } else {
+        document.getElementById('unitModalTitle').innerText = '📐 Thêm đơn vị tính mới';
+        currentUnitId = null;
+    }
+    window.WMS.openModal('unitModal');
+}
+
+function closeUnitModal() {
+    window.WMS.closeModal('unitModal');
+    currentUnitId = null;
+}
+
+async function editUnit(id) {
+    try {
+        const data = await window.WMS.api(`/products/units/${id}`);
+        if(data) {
+            openUnitModal(data);
+        } else {
+            window.WMS.showToast('Không tìm thấy đơn vị tính');
+        }
+    } catch (error) {
+        console.error('Edit unit error:', error);
+        window.WMS.showToast('Lỗi khi tải thông tin đơn vị tính');
+    }
+}
+
+async function deleteUnit(id) {
+    const confirmed = await window.WMS.confirm('Bạn có chắc chắn muốn xóa đơn vị tính này?');
+    if (confirmed) {
+        try {
+            const result = await window.WMS.api(`/products/units/${id}`, 'DELETE');
+            if(result) {
+                window.WMS.showToast('Đã xóa đơn vị tính');
+                loadUnitsTable();
+                loadUnits();
+            }
+        } catch (error) {
+            console.error('Delete unit error:', error);
+            window.WMS.showToast('Lỗi khi xóa đơn vị tính');
+        }
+    }
+}
+
+document.getElementById('unitForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const code = document.getElementById('unit_code').value.trim();
+    const name = document.getElementById('unit_name').value.trim();
+    
+    if (!code) {
+        window.WMS.showToast('Vui lòng nhập mã đơn vị', true);
+        return;
+    }
+    if (!name) {
+        window.WMS.showToast('Vui lòng nhập tên đơn vị', true);
+        return;
+    }
+    
+    const submitBtn = document.getElementById('unitSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Đang xử lý...';
+    
+    const unitData = {
+        code: code,
+        name: name,
+        description: document.getElementById('unit_description').value
+    };
+    
+    let url = '/products/units';
+    let method = 'POST';
+    
+    if (currentUnitId) {
+        url = `/products/units/${currentUnitId}`;
+        method = 'PUT';
+    }
+    
+    try {
+        const result = await window.WMS.api(url, method, unitData);
+        if (result) {
+            closeUnitModal();
+            loadUnitsTable();
+            loadUnits();
+            window.WMS.showToast(currentUnitId ? 'Cập nhật đơn vị thành công' : 'Thêm đơn vị thành công');
+        }
+    } catch (error) {
+        console.error('Save unit error:', error);
+        window.WMS.showToast('Lỗi khi lưu đơn vị: ' + (error.message || 'Unknown error'), true);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Lưu đơn vị';
+    }
+});
+
+// ========== CATEGORIES TAB ==========
+let currentCatId = null;
+let catSearchTimeout = null;
+
+async function loadCategoriesTable(search = '', page = 0) {
+    const limit = 20;
+    const url = `/products/categories?search=${encodeURIComponent(search)}&limit=${limit}&offset=${page * limit}`;
+    
+    try {
+        const data = await window.WMS.api(url);
+        const tbody = document.getElementById('cat-table-body');
+        
+        if(data && data.items) {
+            if(data.items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Không tìm thấy nhóm mặt hàng</td></tr>';
+            } else {
+                tbody.innerHTML = '';
+                data.items.forEach(c => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td data-label="Mã"><strong>${window.WMS.escapeHtml(c.code)}</strong></td>
+                            <td data-label="Tên">${window.WMS.escapeHtml(c.name)}</td>
+                            <td data-label="Cha">${window.WMS.escapeHtml(c.parent_name || '-')}</td>
+                            <td data-label="Mô tả">${window.WMS.escapeHtml(c.description || '-')}</td>
+                            <td data-label="HĐ">
+                                <button class="btn btn-secondary btn-sm" onclick="editCategory(${c.id})">✏️</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteCategory(${c.id})">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            const totalPages = Math.ceil(window.WMS.safeNumber(data.total) / limit);
+            const pagination = document.getElementById('cat-pagination');
+            pagination.innerHTML = '';
+            if(totalPages > 1) {
+                for(let i = 0; i < totalPages; i++) {
+                    const btn = document.createElement('button');
+                    btn.innerText = i + 1;
+                    btn.className = i === page ? 'btn btn-primary' : 'btn btn-secondary';
+                    btn.style.margin = '0 5px';
+                    btn.style.padding = '5px 10px';
+                    btn.onclick = () => loadCategoriesTable(search, i);
+                    pagination.appendChild(btn);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Load categories error:', error);
+        document.getElementById('cat-table-body').innerHTML = '<tr><td colspan="5" style="text-align:center;color:red;">Lỗi tải dữ liệu</td></tr>';
+    }
+}
+
+function searchCategories() {
+    clearTimeout(catSearchTimeout);
+    catSearchTimeout = setTimeout(() => {
+        const search = document.getElementById('cat-search').value;
+        loadCategoriesTable(search, 0);
+    }, 200);
+}
+
+async function loadParentCategories(selectedParentId = null) {
+    try {
+        const data = await window.WMS.api('/products/categories/all');
+        const select = document.getElementById('cat_parent_id');
+        select.innerHTML = '<option value="">-- Không có (nhóm gốc) --</option>';
+        if(data && data.items) {
+            data.items.forEach(cat => {
+                if (!currentCatId || cat.id !== currentCatId) {
+                    const selected = selectedParentId && parseInt(selectedParentId) === cat.id ? ' selected' : '';
+                    select.innerHTML += window.WMS.optionHtml(cat.id, `${cat.name || '-'} (${cat.code || '-'})`);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Load parent categories error:', error);
+    }
+}
+
+function openCategoryModal(cat = null) {
+    document.getElementById('catForm').reset();
+    loadParentCategories(null);
+    
+    if(cat) {
+        document.getElementById('catModalTitle').innerText = '📂 Sửa nhóm mặt hàng';
+        document.getElementById('cat_code').value = cat.code;
+        document.getElementById('cat_name').value = cat.name;
+        document.getElementById('cat_parent_id').value = cat.parent_id || '';
+        document.getElementById('cat_description').value = cat.description || '';
+        currentCatId = cat.id;
+        loadParentCategories(cat.parent_id);
+    } else {
+        document.getElementById('catModalTitle').innerText = '📂 Thêm nhóm mặt hàng mới';
+        currentCatId = null;
+    }
+    window.WMS.openModal('catModal');
+}
+
+function closeCategoryModal() {
+    window.WMS.closeModal('catModal');
+    currentCatId = null;
+}
+
+async function editCategory(id) {
+    try {
+        const data = await window.WMS.api(`/products/categories/${id}`);
+        if(data) {
+            openCategoryModal(data);
+        } else {
+            window.WMS.showToast('Không tìm thấy nhóm mặt hàng');
+        }
+    } catch (error) {
+        console.error('Edit category error:', error);
+        window.WMS.showToast('Lỗi khi tải thông tin nhóm mặt hàng');
+    }
+}
+
+async function deleteCategory(id) {
+    const confirmed = await window.WMS.confirm('Bạn có chắc chắn muốn xóa nhóm mặt hàng này?');
+    if (confirmed) {
+        try {
+            const result = await window.WMS.api(`/products/categories/${id}`, 'DELETE');
+            if(result) {
+                window.WMS.showToast('Đã xóa nhóm mặt hàng');
+                loadCategoriesTable();
+                loadCategories();
+            }
+        } catch (error) {
+            window.WMS.showToast('Lỗi khi xóa nhóm mặt hàng', true);
+        }
+    }
+}
+
+document.getElementById('catForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const code = document.getElementById('cat_code').value.trim();
+    const name = document.getElementById('cat_name').value.trim();
+    
+    if (!code) {
+        window.WMS.showToast('Vui lòng nhập mã nhóm', true);
+        return;
+    }
+    if (!name) {
+        window.WMS.showToast('Vui lòng nhập tên nhóm', true);
+        return;
+    }
+    
+    const submitBtn = document.getElementById('catSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Đang xử lý...';
+    
+    const catData = {
+        code: code,
+        name: name,
+        parent_id: parseInt(document.getElementById('cat_parent_id').value) || null,
+        description: document.getElementById('cat_description').value
+    };
+    
+    let url = '/products/categories';
+    let method = 'POST';
+    
+    if (currentCatId) {
+        url = `/products/categories/${currentCatId}`;
+        method = 'PUT';
+    }
+    
+    try {
+        const result = await window.WMS.api(url, method, catData);
+        if (result) {
+            closeCategoryModal();
+            loadCategoriesTable();
+            loadCategories();
+            window.WMS.showToast(currentCatId ? 'Cập nhật nhóm thành công' : 'Thêm nhóm thành công');
+        }
+    } catch (error) {
+        console.error('Save category error:', error);
+        window.WMS.showToast('Lỗi khi lưu nhóm: ' + (error.message || 'Unknown error'), true);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Lưu nhóm';
+    }
+});
+
+// ========== INIT ==========
+// Tối ưu: load products trước để user thấy data nhanh, dropdowns sau
+loadProducts();
+loadUnitsTable();
+loadCategoriesTable();
+// Dropdowns có thể load sau, không cần thiết hiển thị ngay
+setTimeout(() => {
+    loadCategories();
+    loadUnits();
+    loadWarehouses();
+}, 100);
+
+// ========== WAREHOUSES ==========
+async function loadWarehouses() {
+    try {
+        const data = await window.WMS.api('/warehouses?limit=100');
+        const select = document.getElementById('warehouse_id');
+        if (select && data && data.items) {
+            select.innerHTML = '<option value="">-- Chọn kho --</option>';
+            data.items.forEach(wh => {
+                select.innerHTML += window.WMS.optionHtml(wh.id, `${wh.name || '-'} (${wh.code || '-'})`);
+            });
+        }
+    } catch (error) {
+        console.error('Load warehouses error:', error);
+    }
+}
+</script>
+{% endblock %}

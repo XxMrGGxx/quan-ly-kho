@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block page_title %}Quản lý Khách hàng{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/customers.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="flex gap-2" style="flex:1; flex-wrap:wrap;">
+<input type="text" id="search-input" class="input" placeholder="🔍 Tìm kiếm theo tên, mã, điện thoại..." 
+                   style="min-width:200px;" autocomplete="off">
+<span id="search-status" style="color: #64748b;"></span>
+        </div>
+        <button class="btn btn-primary" onclick="openCustomerModal()">+ Thêm mới</button>
+    </div>
+<div class="card-body" style="padding:0;">
+         <table style="width:100%" class="responsive-table">
+             <thead>
+                 <tr><th data-label="Mã">Mã KH</th><th data-label="Tên">Tên khách hàng</th><th data-label="ĐT">Điện thoại</th><th data-label="Email">Email</th><th data-label="Địa chỉ">Địa chỉ</th><th data-label="Nợ">Công nợ</th><th data-label="HĐ">Hành động</th></tr>
+             </thead>
+             <tbody id="customers-table">
+                 <tr><td colspan="7" style="text-align:center;"><div class="spinner"></div> Đang tải...</td></tr>
+             </tbody>
+         </table>
+     </div>
+</div>
+
+<!-- Modal Thêm/Sửa Khách hàng -->
+<div id="customerModal" class="modal-overlay">
+    <div class="modal-content" style="width:min(92vw,500px);">
+        <div class="modal-header">
+            <h3 id="modalTitle">👤 Thêm khách hàng</h3>
+            <button class="modal-close-btn" onclick="closeCustomerModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="customerForm">
+                <div style="margin-bottom:12px;"><label>Tên khách hàng *</label><input type="text" id="cust_name" class="input" required></div>
+                <div style="margin-bottom:12px;"><label>Người liên hệ</label><input type="text" id="cust_contact" class="input"></div>
+                <div style="margin-bottom:12px;"><label>Điện thoại</label><input type="text" id="cust_phone" class="input"></div>
+                <div style="margin-bottom:12px;"><label>Email</label><input type="email" id="cust_email" class="input"></div>
+                <div style="margin-bottom:12px;"><label>Địa chỉ</label><textarea id="cust_address" class="input" rows="2"></textarea></div>
+                <div style="margin-bottom:12px;"><label>Thành phố</label><input type="text" id="cust_city" class="input"></div>
+                <div style="margin-bottom:12px;"><label>Mã số thuế</label><input type="text" id="cust_tax" class="input"></div>
+                <div class="modal-footer" style="padding:0;margin-top:20px;border:none;background:none;">
+                    <button type="button" class="btn btn-secondary" onclick="closeCustomerModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

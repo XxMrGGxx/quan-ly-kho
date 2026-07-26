@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block page_title %}Quản lý Công Nợ{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/debt.css">
+<div style="margin-bottom:1rem; text-align:right;">
+    <button class="btn btn-primary" onclick="window.location.href='/debt/payment'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:6px;"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+        Thanh toán công nợ
+    </button>
+</div>
+
+<!-- Bộ lọc nhanh -->
+<div class="card" style="margin-bottom: 1rem;">
+    <div class="card-body" style="padding: 0.75rem 1rem;">
+        <div class="report-filter" role="group" aria-label="Bộ lọc công nợ">
+            <div class="field">
+                <label>Từ khóa</label>
+                <input type="text" id="debt-search" class="input" placeholder="Mã, tên..." oninput="filterDebt()">
+            </div>
+            <div class="field" id="debt-status-field">
+                <label id="debt-status-label">Trạng thái</label>
+                <select id="debt-status" class="input" onchange="filterDebt()">
+                    <option value="">Tất cả</option>
+                </select>
+            </div>
+            <div class="actions">
+                <button class="btn btn-sm btn-outline" onclick="resetFilters()">Đặt lại</button>
+                <button class="btn btn-sm btn-primary" onclick="loadDebtSummary()">Làm mới</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab chính -->
+<div class="card">
+    <div class="card-header flex gap-1">
+        <button class="tab-btn active" data-tab="all" onclick="switchDebtTab('all')">Tất cả</button>
+        <button class="tab-btn" data-tab="payments" onclick="switchDebtTab('payments')">Lịch sử thanh toán</button>
+    </div>
+    <div class="card-body" style="padding: 0; max-height: 600px; overflow-y: auto;">
+        <!-- Bảng công nợ -->
+        <table id="table-debt" class="report-table">
+            <colgroup>
+                <col style="width:90px">
+                <col style="width:auto">
+                <col style="width:110px">
+                <col style="width:130px">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Loại</th>
+                    <th>Tên đối tác</th>
+                    <th>Hạn mức</th>
+                    <th>Công nợ hiện tại</th>
+                </tr>
+            </thead>
+            <tbody id="debt-merged-body"></tbody>
+        </table>
+
+        <!-- Lịch sử thanh toán -->
+        <table id="table-payments" class="report-table" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Ngày</th>
+                    <th>Loại</th>
+                    <th>Đối tác</th>
+                    <th>Đơn hàng</th>
+                    <th>Số tiền</th>
+                    <th>Phương thức</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody id="debt-payments-body"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal chi tiết công nợ -->
+<div id="debt-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-lg modal-content">
+        <div class="modal-header">
+            <h3 id="modal-title">Chi tiết công nợ</h3>
+            <button class="modal-close-btn" onclick="closeDebtModal()" type="button" aria-label="Đóng">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="debt-modal-content"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal ghi nhận thanh toán -->
+<div id="payment-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-content modal-sm">
+        <div class="modal-header">
+            <h3>Ghi nhận thanh toán</h3>
+            <button class="modal-close-btn" onclick="closePaymentModal()" type="button" aria-label="Đóng">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="payment-form" onsubmit="submitPayment(event)">
+                <input type="hidden" id="pay-partner-type">
+                <input type="hidden" id="pay-partner-id">
+                <input type="hidden" id="pay-order-type">
+                <input type="hidden" id="pay-order-id">
+
+                <div class="grid grid-cols-2 gap-3" style="margin-bottom: 12px;">
+                    <div class="field">
+                        <label>Đối tác</label>
+                        <input type="text" id="pay-partner-name" readonly class="input" style="background:#f1f5f9;">
+                    </div>
+                    <div class="field">
+                        <label>Đơn hàng</label>
+                        <input type="text" id="pay-order-code" readonly class="input" style="background:#f1f5f9;">
+                    </div>
+                </div>
+
+                <div class="field" style="margin-bottom: 12px;">
+                    <label>Số tiền thanh toán <span style="color:#ef4444; font-weight:700">*</span></label>
+                    <input type="number" id="pay-amount" class="input" step="0.01" min="0.01" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3" style="margin-bottom: 12px;">
+                    <div class="field">
+                        <label>Ngày thanh toán</label>
+                        <input type="date" id="pay-date" class="input" required>
+                    </div>
+                    <div class="field">
+                        <label>Phương thức</label>
+                        <select id="pay-method" class="input">
+                            <option value="cash">Tiền mặt</option>
+                            <option value="transfer">Chuyển khoản</option>
+                            <option value="card">Thẻ</option>
+                            <option value="other">Khác</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field" style="margin-bottom: 12px;">
+                    <label>Số tham chiếu</label>
+                    <input type="text" id="pay-ref" class="input" placeholder="Số chứng từ / mã giao dịch">
+                </div>
+                <div class="field" style="margin-bottom: 14px;">
+                    <label>Ghi chú</label>
+                    <textarea id="pay-notes" class="input" rows="2"></textarea>
+                </div>
+
+                <div class="actions" style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thanh toán</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<script src="/static/js/debt.js"></script>
+{% endblock %}

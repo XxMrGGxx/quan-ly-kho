@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block page_title %}{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="stats-grid">
+        <div class="stat-card stat-variant-success">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-title">Sản phẩm</div>
+                    <div class="stat-value" id="total-products">0</div>
+                    <div class="stat-sub">Tổng số hàng hóa</div>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.29 7 12 12 20.71 7"/>
+                        <line x1="12" y1="22" x2="12" y2="12"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card stat-variant-info">
+            <div class="stat-top">
+                <div>
+                    <canvas id="wan-qr" width="100" height="100" style="background:#fff; border-radius:12px; border:1px solid rgba(148,163,184,0.35);"></canvas>
+                    <div class="stat-value" style="font-size:0.7rem;"> <span id="wan-url-text">Đang lấy...</span></div>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/>
+                        <path d="M16 6l-4-4-4 4"/>
+                        <path d="M12 2v13"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="stat-card">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-title">Đơn hàng tháng</div>
+                    <div class="stat-value" id="total-orders">0</div>
+                    <div class="stat-sub">Nhập + Xuất</div>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12h7l2 2h9"/>
+                        <path d="M3 6h12l2 2h4"/>
+                        <path d="M3 18h5l2 2h12"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card stat-variant-warning" style="cursor: pointer;" onclick="window.location.href='/inventory'">
+            <div class="stat-top">
+                <div>
+                    <div class="stat-title">Cảnh báo</div>
+                    <div class="stat-value" id="low-stock">0</div>
+                    <div class="stat-sub">Hàng sắp hết</div>
+                </div>
+                <div class="stat-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 9v4"/>
+                        <path d="M12 17h.01"/>
+                        <path d="M10.29 3.86l-8.02 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3.14l-8.02-14a2 2 0 0 0-3.42 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Card - spans 2 columns -->
+        <div class="notification-card" style="grid-column: span 2;">
+            <div class="notification-header">
+                <div class="notification-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; stroke-width: 2.2;">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    Thông báo
+                </div>
+            </div>
+            <div class="notification-body">
+                <div id="notification-list">
+                    <div class="notification-loading">Đang tải...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debt Status Card - spans 2 columns -->
+        <div class="debt-status-card" style="grid-column: span 2;">
+            <div class="debt-status-header">
+                <div class="debt-status-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; stroke-width: 2.2;">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Trạng thái công nợ
+                </div>
+            </div>
+            <div class="debt-status-body">
+                <div class="debt-status-row">
+                    <div class="debt-status-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                            <path d="M3 3v18h18"/>
+                            <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+                        </svg>
+                        Phải trả NCC:
+                    </div>
+                    <div class="debt-status-value" id="debt-payable">0 đ</div>
+                </div>
+                <div class="debt-status-row">
+                    <div class="debt-status-label">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                            <path d="M3 3v18h18"/>
+                            <path d="M7 16l4-4 4 4 6-6"/>
+                        </svg>
+                        Phải thu KH:
+                    </div>
+                    <div class="debt-status-value" id="debt-receivable">0 đ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<!-- Thay thế phần scripts trong index.html -->
+
+{% block scripts %}
+<script>
+    async function loadDashboard() {
+        const data = await window.WMS.api('/dashboard');
+        if(data) {
+        document.getElementById('total-products').innerText = data.total_products || 0;
+        document.getElementById('total-orders').innerText = (data.monthly_imports || 0) + (data.monthly_exports || 0);
+
+        document.getElementById('low-stock').innerText = data.low_stock_count || 0;
+        }
+
+}
+
+    async function loadWanQr() {
+        const elText = document.getElementById('wan-url-text');
+        const canvas = document.getElementById('wan-qr');
+        if (!canvas) return;
+
+        try {
+            if (elText) elText.textContent = 'Đang lấy WAN...';
+            const resp = await window.WMS.api('/system/wan-url');
+            const wanUrl = resp?.wan_url;
+
+            if (!wanUrl) {
+                if (elText) elText.textContent = 'Không lấy được WAN';
+                return;
+            }
+
+            if (elText) elText.innerHTML = `<span title="${window.WMS.escapeHtml(wanUrl)}">${window.WMS.escapeHtml(wanUrl)}</span>`;
+
+            // QR: backend trả về qr_data_uri (PNG)
+            const qrDataUri = resp?.qr_data_uri;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (qrDataUri) {
+                const img = new Image();
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    // Fit image inside canvas
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                };
+                img.onerror = () => {
+                    ctx.fillStyle = '#0f172a';
+                    ctx.font = '10px Arial';
+                    ctx.fillText('QR lỗi', 34, 44);
+                };
+                img.src = qrDataUri;
+                return;
+            }
+
+            // Fallback: chỉ render chữ
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '10px Arial';
+            ctx.fillText('QR', 36, 44);
+            ctx.font = '7.5px Arial';
+            ctx.fillText('quét URL', 10, 60);
+
+
+
+        } catch (e) {
+            console.error('WAN QR error:', e);
+            const elText = document.getElementById('wan-url-text');
+            if (elText) elText.textContent = 'Lỗi lấy WAN';
+        }
+    }
+
+    // Retry if api not ready
+    setTimeout(() => { loadDashboard(); loadWanQr(); }, 150);
+    loadDashboard();
+    loadWanQr();
+
+    // Load notifications
+    async function loadNotifications() {
+        const container = document.getElementById('notification-list');
+        if (!container) return;
+
+        try {
+            const data = await window.WMS.api('/dashboard');
+            if (data && data.notifications && data.notifications.length > 0) {
+                container.innerHTML = '';
+                
+                data.notifications.forEach(notif => {
+                    const item = document.createElement('div');
+                    item.className = 'notification-item';
+                    
+                    // Format type badge
+                    const typeBadge = notif.type === 'import' 
+                        ? '<span class="notification-badge import">Nhập</span>'
+                        : '<span class="notification-badge export">Xuất</span>';
+                    
+                    // Format time
+                    const time = notif.date ? new Date(notif.date).toLocaleString('vi-VN', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : '';
+                    
+                    // Employee name
+                    const employee = notif.employee_name || 'Hệ thống';
+                    
+                    // Format message: "{tên nhân viên} vừa tạo phiếu {mã phiếu}"
+                    const message = `${employee} vừa tạo phiếu ${notif.code}`;
+                    
+                    item.innerHTML = `
+                        <div class="notification-content">
+                            <span class="notification-message">${window.WMS.escapeHtml(message)}</span>
+                            <span class="notification-time">${time}</span>
+                        </div>
+                        <div class="notification-badge-wrapper">
+                            ${typeBadge}
+                        </div>
+                    `;
+                    
+                    container.appendChild(item);
+                });
+            } else {
+                container.innerHTML = '<div class="notification-empty">Chưa có thông báo nào</div>';
+            }
+        } catch (e) {
+            console.error('Load notifications error:', e);
+            container.innerHTML = '<div class="notification-empty">Lỗi tải thông báo</div>';
+        }
+    }
+
+    // Load notifications with dashboard
+    setTimeout(() => { loadNotifications(); }, 150);
+    loadNotifications();
+
+    // Load debt status
+    async function loadDebtStatus() {
+        const payableEl = document.getElementById('debt-payable');
+        const receivableEl = document.getElementById('debt-receivable');
+        if (!payableEl || !receivableEl) return;
+
+        try {
+            const data = await window.WMS.api('/dashboard');
+            if (data && data.debt_status) {
+                const payable = data.debt_status.payable_to_suppliers || 0;
+                const receivable = data.debt_status.receivable_from_customers || 0;
+                
+                payableEl.innerText = window.WMS.formatCurrency(payable);
+                receivableEl.innerText = window.WMS.formatCurrency(receivable);
+            }
+        } catch (e) {
+            console.error('Load debt status error:', e);
+            payableEl.innerText = 'Lỗi';
+            receivableEl.innerText = 'Lỗi';
+        }
+    }
+
+    // Load debt status with dashboard
+    setTimeout(() => { loadDebtStatus(); }, 150);
+    loadDebtStatus();
+
+</script>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% block page_title %}Quản lý Tồn kho{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>📊 Tồn kho hiện tại</span>
+        <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="loadInventory()">Tất cả</button>
+            <button class="btn btn-warning btn-sm" onclick="loadLowStock()">⚠️ Hàng sắp hết</button>
+            <button class="btn btn-danger btn-sm" onclick="loadNegativeStock()">🔻 Tồn kho âm</button>
+        </div>
+    </div>
+<div class="card-body" style="padding:0; overflow-x: auto;">
+    <div style="padding:12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <label style="font-weight:600; color:#475569; font-size:14px;">Kho:</label>
+        <select id="inventory-warehouse-filter" class="input" style="width:auto;">
+            <option value="">Tất cả kho</option>
+        </select>
+        <input type="text" id="inventory-search" class="input" style="width:250px;"
+               placeholder="🔍 Tìm mã hoặc tên sản phẩm..." autocomplete="off">
+    </div>
+     <table class="responsive-table">
+         <thead>
+             <tr>
+                 <th data-label="Mã">Mã SP</th><th data-label="Tên">Tên sản phẩm</th><th data-label="Tồn">Tồn kho</th><th data-label="Kho">Kho</th><th data-label="TT">Trạng thái</th><th data-label="HĐ">Hành động</th>
+             </tr>
+         </thead>
+         <tbody id="inventory-table"></tbody>
+     </table>
+     <div id="inventory-pagination" style="padding:12px; display:flex; align-items:center; justify-content:center; flex-wrap:wrap;"></div>
+ </div>
+</div>
+
+<!-- Modal điều chỉnh tồn kho (modernized) -->
+<div id="adjustModal" class="modal-overlay" style="align-items:center;justify-content:center;">
+    <div class="modal-content" style="width:min(92vw,450px);">
+        <div class="modal-header">
+            <h3>📦 Điều chỉnh tồn kho</h3>
+            <button class="modal-close-btn" onclick="closeAdjustModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="adjustForm">
+                <input type="hidden" id="adjust_product_id">
+                <input type="hidden" id="adjust_warehouse_id">
+                <div style="margin-bottom:12px;">
+                    <label>Sản phẩm</label>
+                    <input type="text" id="adjust_product_name" class="input" readonly>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Tồn kho hiện tại</label>
+                    <input type="text" id="adjust_current_qty" class="input" readonly>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Tồn kho mới</label>
+                    <input type="number" id="adjust_new_qty" class="input" step="any" required>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Kho hàng</label>
+                    <input type="text" id="adjust_warehouse_name" class="input" readonly style="background:#f8fafc;">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Lý do</label>
+                    <textarea id="adjust_reason" class="input" rows="2" placeholder="Nhập lý do điều chỉnh..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeAdjustModal()">Hủy</button>
+            <button type="submit" class="btn btn-primary" form="adjustForm">Xác nhận</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentAdjustProduct = null;
+let inventoryPage = 0;
+const inventoryPageSize = 50;
+
+async function loadInventory(page) {
+    if (page !== undefined) inventoryPage = page;
+    const whId = document.getElementById('inventory-warehouse-filter').value;
+    const search = document.getElementById('inventory-search').value.trim();
+    let url = `/inventory/stock?limit=${inventoryPageSize}&offset=${inventoryPage * inventoryPageSize}`;
+    if (whId) url += `&warehouse_id=${encodeURIComponent(whId)}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    const data = await window.WMS.api(url);
+    const tbody = document.getElementById('inventory-table');
+    tbody.innerHTML = '';
+    
+    if(data && data.items) {
+        data.items.forEach(item => {
+            const statusClass = item.quantity_in_stock < 0 ? 'badge-danger' : 
+                               (item.quantity_in_stock === 0 ? 'badge-warning' : 'badge-success');
+            const statusText = item.quantity_in_stock < 0 ? '⚠️ Tồn âm' :
+                              (item.quantity_in_stock === 0 ? '⚠️ Hết hàng' : '✅ Bình thường');
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td data-label="Mã">${window.WMS.escapeHtml(item.product_code || '-')}</td>
+                    <td data-label="Tên">${window.WMS.escapeHtml(item.product_name || '-')}</td>
+                    <td data-label="Tồn"><strong class="${statusClass}">${window.WMS.safeNumber(item.quantity_in_stock)}</strong></td>
+                    <td data-label="Kho">${window.WMS.escapeHtml(item.warehouse_name || 'Kho chính')}</td>
+                    <td data-label="TT"><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td data-label="HĐ">
+                        <button class="btn btn-secondary btn-sm"
+                                data-product-code="${window.WMS.escapeAttr(item.product_code || '')}"
+                                data-product-name="${window.WMS.escapeAttr(item.product_name || '')}"
+                                data-current-qty="${window.WMS.escapeAttr(item.quantity_in_stock || 0)}"
+                                data-product-id="${window.WMS.escapeAttr(item.product_id)}"
+                                data-warehouse-id="${window.WMS.escapeAttr(item.warehouse_id || '1')}"
+                                data-warehouse-name="${window.WMS.escapeAttr(item.warehouse_name || 'Kho chính')}"
+                                onclick="openAdjustModalFromButton(this)">✏️ Điều chỉnh</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có dữ liệu</td></tr>';
+    }
+
+    // Pagination
+    const total = data ? window.WMS.safeNumber(data.total, 0) : 0;
+    const totalPages = Math.ceil(total / inventoryPageSize);
+    const pagination = document.getElementById('inventory-pagination');
+    if (pagination) {
+        pagination.innerHTML = '';
+        if (totalPages > 1) {
+            const info = document.createElement('span');
+            info.style.cssText = 'margin-right:12px; color:#64748b; font-size:13px;';
+            info.textContent = `Trang ${inventoryPage + 1}/${totalPages} (tổng ${total} SP)`;
+            pagination.appendChild(info);
+            for (let i = 0; i < totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.innerText = i + 1;
+                btn.className = i === inventoryPage ? 'btn btn-primary' : 'btn btn-secondary';
+                btn.style.cssText = 'margin:0 2px; padding:4px 10px; font-size:12px;';
+                btn.onclick = () => loadInventory(i);
+                pagination.appendChild(btn);
+            }
+        }
+    }
+}
+
+async function loadNegativeStock() {
+    const whId = document.getElementById('inventory-warehouse-filter').value;
+    let url = '/inventory/negative-stock';
+    if (whId) url += `?warehouse_id=${encodeURIComponent(whId)}`;
+    const data = await window.WMS.api(url);
+    const tbody = document.getElementById('inventory-table');
+    tbody.innerHTML = '';
+    
+    if(data && data.items && data.items.length > 0) {
+        data.items.forEach(item => {
+            const statusClass = 'badge-danger';
+            const statusText = '🔻 Tồn âm';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td data-label="Mã">${window.WMS.escapeHtml(item.code || '-')}</td>
+                    <td data-label="Tên">${window.WMS.escapeHtml(item.name || '-')}</td>
+                    <td data-label="Tồn"><strong class="${statusClass}">${window.WMS.safeNumber(item.quantity_in_stock)}</strong></td>
+                    <td data-label="Kho">${window.WMS.escapeHtml(item.warehouse_name || 'Kho chính')}</td>
+                    <td data-label="TT"><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td data-label="HĐ">
+                        <button class="btn btn-secondary btn-sm"
+                                data-product-code="${window.WMS.escapeAttr(item.code || '')}"
+                                data-product-name="${window.WMS.escapeAttr(item.name || '')}"
+                                data-current-qty="${window.WMS.escapeAttr(item.quantity_in_stock || 0)}"
+                                data-product-id="${window.WMS.escapeAttr(item.product_id)}"
+                                data-warehouse-id="${window.WMS.escapeAttr(item.warehouse_id || '1')}"
+                                data-warehouse-name="${window.WMS.escapeAttr(item.warehouse_name || 'Kho chính')}"
+                                onclick="openAdjustModalFromButton(this)">✏️ Điều chỉnh</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: #64748b;">✅ Không có sản phẩm nào tồn kho âm!</td></tr>';
+    }
+}
+
+async function loadLowStock() {
+    const whId = document.getElementById('inventory-warehouse-filter').value;
+    let url = '/inventory/low-stock';
+    if (whId) url += `?warehouse_id=${encodeURIComponent(whId)}`;
+    const data = await window.WMS.api(url);
+    const tbody = document.getElementById('inventory-table');
+    tbody.innerHTML = '';
+    
+    if(data && data.items && data.items.length > 0) {
+        data.items.forEach(item => {
+            const isLow = item.quantity_in_stock <= 0;
+            const statusClass = isLow ? 'badge-warning' : 'badge-info';
+            const statusText = item.quantity_in_stock <= 0 ? '⚠️ Hết hàng' : '⚠️ Sắp hết';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td data-label="Mã">${window.WMS.escapeHtml(item.product_code || '-')}</td>
+                    <td data-label="Tên">${window.WMS.escapeHtml(item.product_name || '-')}</td>
+                    <td data-label="Tồn"><strong class="${statusClass}">${window.WMS.safeNumber(item.quantity_in_stock)} / ${window.WMS.safeNumber(item.min_stock)}</strong></td>
+                    <td data-label="Kho">${window.WMS.escapeHtml(item.warehouse_name || 'Kho chính')}</td>
+                    <td data-label="TT"><span class="badge ${statusClass}">${statusText}</span></td>
+                    <td data-label="HĐ">
+                        <button class="btn btn-secondary btn-sm"
+                                data-product-code="${window.WMS.escapeAttr(item.product_code || '')}"
+                                data-product-name="${window.WMS.escapeAttr(item.product_name || '')}"
+                                data-current-qty="${window.WMS.escapeAttr(item.quantity_in_stock || 0)}"
+                                data-product-id="${window.WMS.escapeAttr(item.product_id)}"
+                                data-warehouse-id="${window.WMS.escapeAttr(item.warehouse_id || '1')}"
+                                data-warehouse-name="${window.WMS.escapeAttr(item.warehouse_name || 'Kho chính')}"
+                                onclick="openAdjustModalFromButton(this)">✏️ Điều chỉnh</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } else {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: #64748b;">✅ Không có sản phẩm nào sắp hết hàng!</td></tr>';
+    }
+}
+
+function openAdjustModal(productCode, productName, currentQty, productId, warehouseId, warehouseName) {
+    document.getElementById('adjust_product_id').value = productId;
+    document.getElementById('adjust_product_name').value = `${productCode} - ${productName}`;
+    document.getElementById('adjust_current_qty').value = currentQty;
+    document.getElementById('adjust_new_qty').value = currentQty;
+    document.getElementById('adjust_warehouse_id').value = warehouseId || 1;
+    document.getElementById('adjust_warehouse_name').value = warehouseName || 'Kho chính';
+    document.getElementById('adjust_reason').value = '';
+    window.WMS.openModal('adjustModal');
+}
+
+function openAdjustModalFromButton(btn) {
+    openAdjustModal(
+        btn.dataset.productCode || '',
+        btn.dataset.productName || '',
+        parseFloat(btn.dataset.currentQty || '0'),
+        parseInt(btn.dataset.productId || '0', 10),
+        parseInt(btn.dataset.warehouseId || '1', 10),
+        btn.dataset.warehouseName || 'Kho chính'
+    );
+}
+
+function closeAdjustModal() {
+    window.WMS.closeModal('adjustModal');
+}
+
+document.getElementById('adjustForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+const data = {
+    product_id: parseInt(document.getElementById('adjust_product_id').value),
+    warehouse_id: parseInt(document.getElementById('adjust_warehouse_id').value || '1', 10),
+    new_quantity: parseFloat(document.getElementById('adjust_new_qty').value),
+    reason: document.getElementById('adjust_reason').value || 'Điều chỉnh thủ công'
+};
+    
+    const result = await window.WMS.api('/inventory/adjust-stock', 'POST', data);
+    if(result) {
+        closeAdjustModal();
+        loadInventory();
+        window.WMS.showToast('Đã điều chỉnh tồn kho thành công');
+    }
+});
+
+async function loadWarehouseFilter() {
+    try {
+        const data = await window.WMS.api('/warehouses');
+        const select = document.getElementById('inventory-warehouse-filter');
+        if (data && data.items) {
+            data.items.forEach(wh => {
+                const opt = document.createElement('option');
+                opt.value = wh.id;
+                opt.textContent = wh.name;
+                select.appendChild(opt);
+            });
+        }
+    } catch (e) {
+        console.error('Lỗi tải danh sách kho:', e);
+    }
+}
+
+document.getElementById('inventory-warehouse-filter').addEventListener('change', function() {
+    const activeBtn = document.querySelector('.card-header .btn-sm.active-filter');
+    if (activeBtn) activeBtn.classList.remove('active-filter');
+    loadInventory();
+});
+
+document.getElementById('inventory-search').addEventListener('input', window.WMS.debounce(function() {
+    loadInventory();
+}, 300));
+
+document.querySelectorAll('.card-header .btn-sm').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.card-header .btn-sm').forEach(b => b.classList.remove('active-filter'));
+        this.classList.add('active-filter');
+    });
+});
+
+loadWarehouseFilter();
+loadInventory();
+</script>
+{% endblock %}

@@ -1,0 +1,437 @@
+/* ========== DEBT PAYMENT PAGE ========== */
+
+/* Partner search card */
+.search-card {
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    overflow: visible;
+}
+
+.search-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .search-layout {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.partner-search-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.search-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+}
+
+.partner-search-wrapper .input {
+    width: 100%;
+    padding: 12px 40px;
+    font-size: 15px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    transition: all 0.2s ease;
+    background: #f8fafc;
+}
+
+.partner-search-wrapper .input:focus {
+    background: #fff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    outline: none;
+}
+
+.clear-btn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.clear-btn:hover {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* Dropdown */
+.partner-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 400px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    z-index: 1100;
+    margin-top: 8px;
+}
+
+.partner-dropdown-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    flex-direction: column;
+}
+
+.partner-dropdown-item:hover,
+.partner-dropdown-item.active {
+    background: #eff6ff;
+}
+
+.partner-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.partner-dropdown-item.partner-empty {
+    color: #64748b;
+    cursor: default;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+}
+
+.partner-item-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.partner-code {
+    font-weight: 700;
+    color: #64748b;
+    font-size: 12px;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.partner-name {
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.partner-item-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.partner-tag {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+}
+
+.partner-tag.tag-customer {
+    color: #1e40af;
+    background: #dbeafe;
+}
+
+.partner-tag.tag-supplier {
+    color: #065f46;
+    background: #d1fae5;
+}
+
+.partner-phone {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.partner-debt {
+    margin-left: auto;
+    color: #dc2626;
+    font-weight: 800;
+    font-size: 14px;
+    background: #fee2e2;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+/* Partner filter */
+.partner-filter {
+    display: flex;
+    gap: 10px;
+    padding: 4px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    width: fit-content;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-icon {
+    font-size: 16px;
+}
+
+.filter-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: #334155;
+}
+
+.filter-btn.active {
+    background: #fff;
+    color: #2563eb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 640px) {
+    .partner-filter {
+        width: 100%;
+    }
+    .filter-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 4px;
+        font-size: 11px;
+    }
+}
+
+/* Partner info bar */
+.partner-info-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 16px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.partner-info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.partner-info-item .info-label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+@media (max-width: 980px) {
+    .partner-info-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Payment toolbar */
+.payment-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 0;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+    margin: 12px 0;
+}
+
+.toolbar-left {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.toolbar-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.quick-pay-group {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+@media (max-width: 640px) {
+    .payment-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .toolbar-left,
+    .toolbar-right {
+        width: 100%;
+    }
+    .quick-pay-group {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* Orders table */
+.orders-table-wrapper {
+    max-height: 50vh;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-top: 12px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.orders-table thead th {
+    background: #f8fafc;
+    padding: 12px 14px;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.orders-table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+.orders-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.orders-table .order-code {
+    font-weight: 700;
+    color: #334155;
+}
+
+/* Payment summary */
+.payment-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.summary-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 13px;
+}
+
+.summary-total {
+    padding-left: 20px;
+    border-left: 3px solid #cbd5e1;
+}
+
+@media (max-width: 980px) {
+    .payment-summary {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .summary-total {
+        border-left: none;
+        padding-left: 0;
+    }
+}
+
+.summary-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Cards */
+.card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.card-header {
+    padding: 14px 18px;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+}
+
+.card-body {
+    padding: 18px;
+}
+
+/* Debt Badges */
+.debt-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 12px;
+    border: 1.5px solid transparent;
+    transition: all 0.2s;
+}
+
+.debt-over-limit { color: #dc2626; background: #fee2e2; border-color: #fecaca; }
+.debt-normal { color: #059669; background: #d1fae5; border-color: #a7f3d0; }
+.debt-warning { color: #d97706; background: #fffbeb; border-color: #fde68a; }

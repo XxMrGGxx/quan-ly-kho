@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block page_title %}{{ 'Sửa phiếu' if mode == 'edit' else 'Tạo phiếu' }}{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div style="font-size:18px;font-weight:700;">{{ 'Sửa phiếu' if mode == 'edit' else 'Tạo phiếu xuất' }}</div>
+            <span style="font-size:13px;color:#64748b;">Người lập phiếu: <strong id="created_by_display" style="color:#0f172a;"></strong></span>
+       
+        </div>
+        <div class="flex gap-2">
+            <a class="btn btn-secondary" href="/export">Quay lại</a>
+            <button form="exportForm" type="submit" class="btn btn-primary">Lưu phiếu</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <form id="exportForm">
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px;">
+                <div><label>Khách hàng *</label><select id="customer_id" class="input" required><option value="">Chọn khách hàng</option></select></div>
+                <div><label>Ngày đặt hàng</label><input type="date" id="order_date" class="input"></div>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:12px;">
+                <div><label>Ngày giao dự kiến</label><input type="date" id="expected_date" class="input"></div>
+                <div><label>Phương thức thanh toán</label><select id="payment_method" class="input"><option value="cash">Tiền mặt</option><option value="bank">Chuyển khoản</option><option value="debt">Công nợ</option></select></div>
+                <div><label>Đã thanh toán</label><input type="number" id="paid_amount" class="input" value="0"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px;">
+                <div><label>Địa chỉ giao hàng</label><textarea id="shipping_address" class="input" rows="2"></textarea></div>
+                <div><label>Địa chỉ giao/nhận:</label><textarea id="reference_number" class="input" rows="2"></textarea></div>
+            </div>
+            <div style="margin-bottom:12px;"><label>Ghi chú</label><textarea id="notes" class="input" rows="2"></textarea></div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px;">
+                <div><label>Giảm giá trên đơn hàng</label><input type="number" id="discount_amount" class="input" value="0"></div>
+                <div><label>Tạm tính</label><input id="preview-total" class="input" value="0 đ" readonly></div>
+            </div>
+            <div class="card" style="border:1px solid #e2e8f0; box-shadow:none;">
+                <div class="card-header"><span>Sản phẩm xuất</span><button type="button" class="btn btn-secondary" onclick="addItemRow()">+ Thêm dòng</button></div>
+                <div class="card-body" style="padding:12px; overflow-x:auto;">
+                    <div style="display:grid;grid-template-columns:56px 2.2fr .9fr 1fr 1fr .8fr 1fr 52px;gap:8px;font-size:12px;font-weight:700;color:#475569;margin-bottom:8px;">
+                        <div>STT</div><div>Sản phẩm</div><div>ĐVT</div><div>Số lượng</div><div>Đơn giá</div><div>% CK</div><div>Thành tiền</div><div></div>
+                    </div>
+                    <div id="items-list"></div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/export_form.js"></script>
+
+
+{% endblock %}

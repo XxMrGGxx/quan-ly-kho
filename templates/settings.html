@@ -1,0 +1,780 @@
+{% extends "base.html" %}
+{% block page_title %}Cài đặt{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/settings.css">
+
+
+<div class="settings-container">
+    <!-- Page Header -->
+    <div class="settings-header">
+        <div class="settings-header-left">
+            <div class="settings-header-icon">⚙️</div>
+            <div class="settings-header-text">
+                <h1>Cài đặt hệ thống</h1>
+                <p>Quản lý cấu hình hệ thống và thông tin đơn vị sử dụng</p>
+            </div>
+        </div>
+        <span class="settings-admin-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Chỉ dành cho Admin
+        </span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="settings-tabs">
+        <button class="settings-tab-btn" type="button" id="tab-company" onclick="switchSettingsTab('company')">
+            <span class="tab-icon">🏢</span>
+            <span class="tab-label">Thông tin đơn vị</span>
+        </button>
+        <button class="settings-tab-btn" type="button" id="tab-app" onclick="switchSettingsTab('app')">
+            <span class="tab-icon">⚙️</span>
+            <span class="tab-label">Cài đặt ứng dụng</span>
+        </button>
+        <button class="settings-tab-btn" type="button" id="tab-data" onclick="switchSettingsTab('data')">
+            <span class="tab-icon">📊</span>
+            <span class="tab-label">Quản lý dữ liệu</span>
+        </button>
+    </div>
+
+    <!-- ===== TAB 1: COMPANY ===== -->
+    <div id="tab-content-company" class="settings-tab" style="display:none;">
+        <!-- Logo -->
+        <div class="settings-card">
+            <div class="settings-card-body">
+                <div class="logo-section">
+                    <img src="/static/company-logo.svg" alt="Logo công ty">
+                    <div class="logo-section-info">
+                        <h3>Logo đơn vị sử dụng</h3>
+                        <p>Logo này được hiển thị trên giao diện chính và sử dụng làm hình ảnh đại diện cho các tài liệu in ấn (nếu có file PNG tương ứng).</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Info Form -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <span class="header-icon">🏢</span>
+                Thông tin đơn vị sử dụng
+            </div>
+            <div class="settings-card-body">
+                <div class="settings-form-grid">
+                    <div class="settings-form-group">
+                        <label>Tên công ty <span class="required">*</span></label>
+                        <input type="text" id="company_name" class="input" placeholder="Nhập tên công ty">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Tên hiển thị ngắn</label>
+                        <input type="text" id="short_name" class="input" placeholder="VD: Công ty ABC">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Mã số thuế</label>
+                        <input type="text" id="tax_code" class="input" placeholder="VD: 0123456789">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Số điện thoại</label>
+                        <input type="text" id="phone" class="input" placeholder="VD: 0123 456 789">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Email</label>
+                        <input type="email" id="email" class="input" placeholder="example@company.com">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Website</label>
+                        <input type="text" id="website" class="input" placeholder="https://example.com">
+                    </div>
+                    <div class="settings-form-group full-width">
+                        <label>Địa chỉ</label>
+                        <textarea id="address" class="input" rows="2" placeholder="Nhập địa chỉ công ty"></textarea>
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Người đại diện</label>
+                        <input type="text" id="representative" class="input" placeholder="Họ và tên">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Tài khoản ngân hàng</label>
+                        <input type="text" id="bank_account" class="input" placeholder="Số tài khoản">
+                    </div>
+                    <div class="settings-form-group">
+                        <label>Ngân hàng</label>
+                        <input type="text" id="bank_name" class="input" placeholder="Tên ngân hàng">
+                    </div>
+                </div>
+                <div class="settings-form-actions">
+                    <button class="btn btn-secondary" type="button" onclick="loadCompanyProfile()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Tải lại
+                    </button>
+                    <button class="btn btn-primary" type="button" onclick="saveCompanyProfile()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Lưu thông tin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB 2: APP SETTINGS ===== -->
+    <div id="tab-content-app" class="settings-tab" style="display:block;">
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <span class="header-icon">⚙️</span>
+                Cài đặt ứng dụng
+            </div>
+            <div class="settings-card-body">
+                <!-- Toggle: Allow negative stock -->
+                <div class="toggle-card">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="allow_negative_stock" />
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <div class="toggle-info">
+                        <h4>Cho phép xuất kho làm tồn kho âm</h4>
+                        <p>Nếu bật: hệ thống cho phép xác nhận xuất khi kho không đủ, nhưng sẽ yêu cầu xác nhận bắt buộc trong luồng xuất kho.</p>
+                    </div>
+                </div>
+
+                <!-- Debt Limits -->
+                <div class="debt-limits-grid">
+                    <div class="debt-limit-card">
+                        <div class="card-icon">🏭</div>
+                        <h4>Hạn mức công nợ Nhà cung cấp</h4>
+                        <input type="number" id="ncc_debt_limit" class="input" step="0.01" min="0" placeholder="VD: 50,000,000" />
+                        <div class="hint">Nếu > 0: chặn khi công nợ NCC vượt hạn mức.</div>
+                    </div>
+                    <div class="debt-limit-card">
+                        <div class="card-icon">👤</div>
+                        <h4>Hạn mức công nợ Khách hàng</h4>
+                        <input type="number" id="kh_debt_limit" class="input" step="0.01" min="0" placeholder="VD: 30,000,000" />
+                        <div class="hint">Nếu > 0: chặn khi công nợ KH vượt hạn mức.</div>
+                    </div>
+                </div>
+
+                <div class="settings-form-actions">
+                    <button class="btn btn-secondary" type="button" onclick="loadAppSettings()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Tải lại
+                    </button>
+                    <button class="btn btn-primary" type="button" onclick="saveAppSettings()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Lưu cài đặt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TAB 3: DATA MANAGEMENT ===== -->
+    <div id="tab-content-data" class="settings-tab" style="display:none;">
+
+        <!-- 1. Backup & Restore -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <span class="header-icon">🔄</span>
+                Sao lưu & Phục hồi dữ liệu
+            </div>
+            <div class="settings-card-body">
+                <div class="backup-actions">
+                    <button class="btn btn-primary" type="button" onclick="createBackup()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Tạo sao lưu
+                    </button>
+                    <button class="btn btn-secondary" type="button" onclick="loadBackupList()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        Danh sách backup
+                    </button>
+                </div>
+
+                <!-- Backup list -->
+                <div id="backup-list-container" style="display:none;">
+                    <div id="backup-list"></div>
+                </div>
+
+                <!-- Restore warning -->
+                <div id="restore-form" class="restore-warning">
+                    <div class="restore-warning-title">⚠️ Phục hồi dữ liệu</div>
+                    <div class="restore-warning-text">
+                        Hành động này sẽ ghi đè toàn bộ dữ liệu hiện tại bằng dữ liệu từ file backup.
+                        Một bản sao lưu tự động sẽ được tạo trước khi phục hồi.
+                    </div>
+                    <div class="restore-warning-actions">
+                        <span class="filename" id="restore-filename"></span>
+                        <button class="btn btn-danger" type="button" onclick="confirmRestore()">🔄 Xác nhận phục hồi</button>
+                        <button class="btn btn-secondary" type="button" onclick="cancelRestore()">Hủy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Import/Export -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <span class="header-icon">📥</span>
+                Xuất / Nhập danh mục Excel
+            </div>
+            <div class="settings-card-body">
+                <div class="exim-grid">
+                    <!-- Products -->
+                    <div class="exim-card">
+                        <div class="exim-card-title">📦 Hàng hóa</div>
+                        <div class="exim-card-actions">
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="exportData('products')">📤 Xuất Excel</button>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="downloadTemplate('products')">📋 Tải mẫu import</button>
+                            <div class="file-input-wrap">
+                                <input type="file" id="import-products-file" accept=".xlsx,.xls" onchange="importData('products')" />
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Customers -->
+                    <div class="exim-card">
+                        <div class="exim-card-title">👤 Khách hàng</div>
+                        <div class="exim-card-actions">
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="exportData('customers')">📤 Xuất Excel</button>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="downloadTemplate('customers')">📋 Tải mẫu import</button>
+                            <div class="file-input-wrap">
+                                <input type="file" id="import-customers-file" accept=".xlsx,.xls" onchange="importData('customers')" />
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Suppliers -->
+                    <div class="exim-card">
+                        <div class="exim-card-title">🏭 Nhà cung cấp</div>
+                        <div class="exim-card-actions">
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="exportData('suppliers')">📤 Xuất Excel</button>
+                            <button class="btn btn-secondary btn-sm" type="button" onclick="downloadTemplate('suppliers')">📋 Tải mẫu import</button>
+                            <div class="file-input-wrap">
+                                <input type="file" id="import-suppliers-file" accept=".xlsx,.xls" onchange="importData('suppliers')" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Import result -->
+                <div id="import-result" class="import-result"></div>
+            </div>
+        </div>
+
+        <!-- 3. Danger Zone -->
+        <div class="settings-card">
+            <div class="settings-card-header danger">
+                <span class="header-icon">🗑️</span>
+                Xóa dữ liệu giao dịch
+            </div>
+            <div class="settings-card-body">
+                <p style="color:#64748b; font-size:0.85rem; margin-bottom:14px; line-height:1.5;">
+                    Các thao tác này <strong>không thể hoàn tác</strong>. Vui lòng sao lưu dữ liệu trước khi thực hiện.
+                </p>
+
+                <div class="danger-zone-grid">
+                    <!-- Delete Import -->
+                    <div class="danger-item">
+                        <div class="danger-item-title">📥 Xóa phiếu nhập kho</div>
+                        <div class="danger-item-desc">Xóa toàn bộ lịch sử nhập kho và giao dịch liên quan.</div>
+                        <div class="danger-item-actions">
+                            <input type="text" id="clear-import-confirm" class="input-confirm" placeholder="Nhập CONFIRM để xóa" />
+                            <button class="btn btn-danger btn-sm" type="button" onclick="clearTransactions('import_orders')">🗑️ Xóa</button>
+                        </div>
+                    </div>
+                    <!-- Delete Export -->
+                    <div class="danger-item">
+                        <div class="danger-item-title">📤 Xóa phiếu xuất kho</div>
+                        <div class="danger-item-desc">Xóa toàn bộ lịch sử xuất kho và giao dịch liên quan.</div>
+                        <div class="danger-item-actions">
+                            <input type="text" id="clear-export-confirm" class="input-confirm" placeholder="Nhập CONFIRM để xóa" />
+                            <button class="btn btn-danger btn-sm" type="button" onclick="clearTransactions('export_orders')">🗑️ Xóa</button>
+                        </div>
+                    </div>
+                    <!-- Delete All -->
+                    <div class="danger-item danger-item-full">
+                        <div class="danger-item-title">🗑️ Xóa tất cả giao dịch (Nhập + Xuất)</div>
+                        <div class="danger-item-desc">Xóa toàn bộ lịch sử nhập kho, xuất kho và các giao dịch tồn kho liên quan.</div>
+                        <div class="danger-item-actions">
+                            <input type="text" id="clear-all-confirm" class="input-confirm" style="width:200px;" placeholder="Nhập CONFIRM để xóa" />
+                            <button class="btn btn-danger" type="button" onclick="clearTransactions('all')">🗑️ Xóa tất cả</button>
+                        </div>
+                    </div>
+                    <!-- Reset Inventory -->
+                    <div class="danger-item danger-item-full">
+                        <div class="danger-item-title">🔄 Reset tồn kho về 0</div>
+                        <div class="danger-item-desc">Đặt lại toàn bộ số lượng tồn kho về 0 và xóa lịch sử giao dịch tồn kho.</div>
+                        <div class="danger-item-actions">
+                            <input type="text" id="reset-inventory-confirm" class="input-confirm" style="width:200px;" placeholder="Nhập CONFIRM để reset" />
+                            <button class="btn btn-danger" type="button" onclick="resetInventory()">🔄 Reset</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== SAFETY KEY MODAL ===== -->
+<div id="safety-key-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:white; border-radius:16px; padding:28px; max-width:420px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+            <span style="font-size:1.5rem;">🔐</span>
+            <h3 style="margin:0; font-size:1.05rem; font-weight:700; color:#0f172a;">Khóa an toàn</h3>
+        </div>
+        <p style="color:#64748b; font-size:0.85rem; margin:4px 0 16px; line-height:1.5;">
+            Vui lòng nhập khóa an toàn để thực hiện thao tác này.
+        </p>
+        <input type="password" id="safety-key-input" style="width:100%; padding:12px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:0.95rem; outline:none; box-sizing:border-box; margin-bottom:12px;" placeholder="Nhập khóa an toàn..." />
+        <div id="safety-key-error" style="display:none; color:#ef4444; font-size:0.82rem; margin-bottom:10px; font-weight:600;">❌ Sai khóa an toàn</div>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button class="btn btn-secondary" type="button" onclick="closeSafetyKeyModal()">Hủy</button>
+            <button class="btn btn-primary" type="button" onclick="confirmSafetyKey()">Xác nhận</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ===== SAFETY KEY MODAL =====
+let _safetyKeyCallback = null;
+
+function showSafetyKeyModal(callback) {
+    _safetyKeyCallback = callback;
+    document.getElementById('safety-key-error').style.display = 'none';
+    document.getElementById('safety-key-input').value = '';
+    document.getElementById('safety-key-modal').style.display = 'flex';
+    document.getElementById('safety-key-input').focus();
+}
+
+function closeSafetyKeyModal() {
+    document.getElementById('safety-key-modal').style.display = 'none';
+    _safetyKeyCallback = null;
+}
+
+async function confirmSafetyKey() {
+    const key = document.getElementById('safety-key-input').value.trim();
+    if (!key) {
+        document.getElementById('safety-key-error').textContent = '❌ Vui lòng nhập khóa an toàn';
+        document.getElementById('safety-key-error').style.display = 'block';
+        return;
+    }
+    
+    // Lưu key tạm thời
+    window._safetyKey = key;
+    document.getElementById('safety-key-error').style.display = 'none';
+    
+    // Lưu callback reference trước khi close modal (vì close modal sẽ xóa callback)
+    const cb = _safetyKeyCallback;
+    _safetyKeyCallback = null;
+    closeSafetyKeyModal();
+    
+    // Gọi callback sau khi modal đã đóng
+    if (typeof cb === 'function') {
+        await cb(key);
+    }
+}
+
+// Hàm fetch an toàn có gửi safety_key
+async function apiWithSafetyKey(url, method, body) {
+    if (!body) body = {};
+    if (!window._safetyKey) {
+        window._safetyKey = '';
+    }
+    body.safety_key = window._safetyKey;
+    
+    try {
+        const result = await window.WMS.api(url, method, body);
+        window._safetyKey = ''; // Clear key sau khi thành công
+        return result;
+    } catch (e) {
+        // Nếu lỗi sai key, clear key và báo lỗi
+        if (e.message && (e.message.includes('Sai khóa an toàn') || e.message.includes('khóa an toàn'))) {
+            window._safetyKey = '';
+            window.WMS.showToast('❌ Sai khóa an toàn', true);
+            return null;
+        }
+        throw e;
+    }
+}
+
+function switchSettingsTab(tab){
+    const isCompany = tab === 'company';
+    const isApp = tab === 'app';
+    const isData = tab === 'data';
+    
+    document.getElementById('tab-content-company').style.display = isCompany ? 'block' : 'none';
+    document.getElementById('tab-content-app').style.display = isApp ? 'block' : 'none';
+    document.getElementById('tab-content-data').style.display = isData ? 'block' : 'none';
+
+    document.getElementById('tab-company').className = 'settings-tab-btn' + (isCompany ? ' active' : '');
+    document.getElementById('tab-app').className = 'settings-tab-btn' + (isApp ? ' active' : '');
+    document.getElementById('tab-data').className = 'settings-tab-btn' + (isData ? ' active' : '');
+
+    if(isCompany) loadCompanyProfile();
+    if(isData) loadBackupList();
+}
+
+async function loadCompanyProfile() {
+    try {
+        const data = await window.WMS.api('/license/company-profile');
+        const p = data.profile || {};
+        document.getElementById('company_name').value = p.company_name || '';
+        document.getElementById('short_name').value = p.short_name || '';
+        document.getElementById('tax_code').value = p.tax_code || '';
+        document.getElementById('phone').value = p.phone || '';
+        document.getElementById('email').value = p.email || '';
+        document.getElementById('website').value = p.website || '';
+        document.getElementById('address').value = p.address || '';
+        document.getElementById('representative').value = p.representative || '';
+        document.getElementById('bank_account').value = p.bank_account || '';
+        document.getElementById('bank_name').value = p.bank_name || '';
+    } catch (error) {
+        console.error('Load company profile error:', error);
+    }
+}
+
+async function saveCompanyProfile() {
+    const payload = {
+        company_name: document.getElementById('company_name').value,
+        short_name: document.getElementById('short_name').value,
+        tax_code: document.getElementById('tax_code').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        website: document.getElementById('website').value,
+        address: document.getElementById('address').value,
+        representative: document.getElementById('representative').value,
+        bank_account: document.getElementById('bank_account').value,
+        bank_name: document.getElementById('bank_name').value
+    };
+    try {
+        const result = await window.WMS.api('/license/company-profile', 'PUT', payload);
+        if (result) {
+            window.WMS.showToast(result.message || 'Đã lưu thông tin đơn vị');
+            loadCompanyProfile();
+            if (window.WMS.refreshCompanyProfile) window.WMS.refreshCompanyProfile();
+        }
+    } catch (error) {
+        window.WMS.showToast(error.message || 'Lỗi lưu thông tin đơn vị');
+    }
+}
+
+async function loadAppSettings(){
+    try {
+        const data = await window.WMS.api('/inventory/settings');
+        const s = data?.settings || {};
+        const allow = !!s.allow_negative_stock;
+        document.getElementById('allow_negative_stock').checked = allow;
+        document.getElementById('ncc_debt_limit').value = (s.ncc_debt_limit ?? 0);
+        document.getElementById('kh_debt_limit').value = (s.kh_debt_limit ?? 0);
+    } catch (e) {
+        console.error('Load app settings error:', e);
+    }
+}
+
+async function saveAppSettings(){
+    const payload = {
+        allow_negative_stock: document.getElementById('allow_negative_stock').checked,
+        ncc_debt_limit: parseFloat(document.getElementById('ncc_debt_limit').value || '0'),
+        kh_debt_limit: parseFloat(document.getElementById('kh_debt_limit').value || '0')
+    };
+    try {
+        const result = await window.WMS.api('/inventory/settings','PUT',payload);
+        if(result){
+            window.WMS.showToast(result.message || 'Đã lưu cài đặt ứng dụng');
+            loadAppSettings();
+        }
+    } catch (e) {
+        window.WMS.showToast(e.message || 'Lỗi lưu cài đặt', true);
+    }
+}
+
+// ========== DATA MANAGEMENT FUNCTIONS ==========
+
+// --- BACKUP ---
+async function createBackup() {
+    try {
+        const result = await window.WMS.api('/data/backup', 'POST');
+        if (result) {
+            window.WMS.showToast(result.message || 'Đã sao lưu thành công');
+            loadBackupList();
+        }
+    } catch (e) {
+        window.WMS.showToast(e.message || 'Lỗi sao lưu', true);
+    }
+}
+
+async function loadBackupList() {
+    const container = document.getElementById('backup-list-container');
+    const list = document.getElementById('backup-list');
+    try {
+        const data = await window.WMS.api('/data/backups');
+        container.style.display = 'block';
+        
+        if (!data.items || data.items.length === 0) {
+            list.innerHTML = '<div class="backup-empty">Chưa có bản sao lưu nào.</div>';
+            return;
+        }
+        
+        let html = '<div class="backup-table-wrap"><table class="backup-table">';
+        html += '<thead><tr><th>File</th><th>Kích thước</th><th>Ngày tạo</th><th style="text-align:center;">Thao tác</th></tr></thead><tbody>';
+        
+        for (const item of data.items) {
+            const dateStr = item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : '-';
+            html += `<tr>
+                <td>${window.WMS.escapeHtml(item.filename)}</td>
+                <td>${item.file_size_display}</td>
+                <td>${dateStr}</td>
+                <td><div class="action-btns">
+                    <button class="btn btn-sm btn-secondary" onclick="downloadBackup('${window.WMS.escapeAttr(item.filename)}')" title="Tải về">⬇️</button>
+                    <button class="btn btn-sm btn-warning" onclick="showRestore('${window.WMS.escapeAttr(item.filename)}')" title="Phục hồi">🔄</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteBackup('${window.WMS.escapeAttr(item.filename)}')" title="Xóa">🗑️</button>
+                </div></td>
+            </tr>`;
+        }
+        html += '</tbody></table></div>';
+        list.innerHTML = html;
+    } catch (e) {
+        window.WMS.showToast(e.message || 'Lỗi tải danh sách backup', true);
+    }
+}
+
+async function downloadBackup(filename) {
+    try {
+        const token = localStorage.getItem('wms_token');
+        const response = await fetch(`/api/data/backups/${encodeURIComponent(filename)}/download`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Tải file thất bại');
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (e) {
+        window.WMS.showToast(e.message || 'Lỗi tải file', true);
+    }
+}
+
+function showRestore(filename) {
+    document.getElementById('restore-filename').textContent = `File: ${filename}`;
+    document.getElementById('restore-form').classList.add('show');
+    document.getElementById('restore-form').dataset.filename = filename;
+}
+
+function cancelRestore() {
+    document.getElementById('restore-form').classList.remove('show');
+}
+
+async function confirmRestore() {
+    const filename = document.getElementById('restore-form').dataset.filename;
+    if (!filename) return;
+    
+    if (!confirm('⚠️ CẢNH BÁO: Hành động này sẽ ghi đè toàn bộ dữ liệu hiện tại!\n\nMột bản sao lưu tự động sẽ được tạo trước khi phục hồi.\n\nBạn có chắc chắn muốn tiếp tục?')) {
+        return;
+    }
+    
+    try {
+        const result = await window.WMS.api('/data/restore', 'POST', { filename });
+        if (result) {
+            window.WMS.showToast(result.message || 'Đã phục hồi thành công');
+            cancelRestore();
+            // Redirect to login
+            setTimeout(() => {
+                window.WMS.logout();
+            }, 2000);
+        }
+    } catch (e) {
+        window.WMS.showToast(e.message || 'Lỗi phục hồi', true);
+    }
+}
+
+async function deleteBackup(filename) {
+    if (!confirm(`Xóa file backup "${filename}"?`)) return;
+    try {
+        const result = await window.WMS.api(`/data/backups/${encodeURIComponent(filename)}`, 'DELETE');
+        if (result) {
+            window.WMS.showToast(result.message || 'Đã xóa file backup');
+            loadBackupList();
+        }
+    } catch (e) {
+        window.WMS.showToast(e.message || 'Lỗi xóa file', true);
+    }
+}
+
+// --- EXPORT (yêu cầu khóa an toàn) ---
+async function exportData(dataType) {
+    showSafetyKeyModal(async function(key) {
+        try {
+            const token = localStorage.getItem('wms_token');
+            const response = await fetch(`/api/data/export/${dataType}?safety_key=${encodeURIComponent(key)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({detail: 'Xuất dữ liệu thất bại'}));
+                throw new Error(err.detail || 'Xuất dữ liệu thất bại');
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `danh_sach_${dataType}.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
+            window.WMS.showToast('Đã xuất dữ liệu thành công');
+        } catch (e) {
+            window.WMS.showToast(e.message || 'Lỗi xuất dữ liệu', true);
+        }
+    });
+}
+
+// --- DOWNLOAD IMPORT TEMPLATE (yêu cầu khóa an toàn) ---
+async function downloadTemplate(dataType) {
+    showSafetyKeyModal(async function(key) {
+        try {
+            const token = localStorage.getItem('wms_token');
+            const response = await fetch(`/api/data/import-template/${dataType}?safety_key=${encodeURIComponent(key)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({detail: 'Tải mẫu thất bại'}));
+                throw new Error(err.detail || 'Tải mẫu thất bại');
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mau_import_${dataType}.xlsx`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            window.WMS.showToast(e.message || 'Lỗi tải mẫu', true);
+        }
+    });
+}
+
+// --- IMPORT (yêu cầu khóa an toàn) ---
+async function importData(dataType) {
+    const fileInput = document.getElementById(`import-${dataType}-file`);
+    const file = fileInput.files[0];
+    if (!file) {
+        window.WMS.showToast('Vui lòng chọn file Excel', true);
+        return;
+    }
+    
+    const resultDiv = document.getElementById('import-result');
+    resultDiv.className = 'import-result show';
+    resultDiv.innerHTML = '<div>Đang xử lý...</div>';
+    
+    showSafetyKeyModal(async function(key) {
+        try {
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const base64 = e.target.result;
+                try {
+                    const result = await window.WMS.api(`/data/import/${dataType}`, 'POST', { 
+                        file_base64: base64,
+                        safety_key: key
+                    });
+                    if (result) {
+                        let html = `<div style="font-weight:700;">✅ ${result.message}</div>`;
+                        if (result.errors && result.errors.length > 0) {
+                            html += '<div style="margin-top:8px;">Lỗi:</div>';
+                            html += '<ul class="error-list">';
+                            for (const err of result.errors.slice(0, 10)) {
+                                html += `<li>Dòng ${err.row}: ${window.WMS.escapeHtml(err.error)}</li>`;
+                            }
+                            if (result.errors.length > 10) {
+                                html += `<li>...và ${result.errors.length - 10} lỗi khác</li>`;
+                            }
+                            html += '</ul>';
+                        }
+                        resultDiv.className = 'import-result show' + (result.errors && result.errors.length > 0 ? ' error' : ' success');
+                        resultDiv.innerHTML = html;
+                        fileInput.value = '';
+                    }
+                } catch (err) {
+                    resultDiv.className = 'import-result show error';
+                    resultDiv.innerHTML = `<div style="font-weight:700;">❌ ${err.message || 'Lỗi import'}</div>`;
+                }
+            };
+            reader.readAsDataURL(file);
+        } catch (e) {
+            resultDiv.className = 'import-result show error';
+            resultDiv.innerHTML = `<div style="font-weight:700;">❌ ${e.message || 'Lỗi đọc file'}</div>`;
+        }
+    });
+}
+
+// --- CLEAR TRANSACTIONS (yêu cầu khóa an toàn) ---
+async function clearTransactions(dataType) {
+    let confirmId;
+    let label;
+    if (dataType === 'import_orders') {
+        confirmId = 'clear-import-confirm';
+        label = 'phiếu nhập kho';
+    } else if (dataType === 'export_orders') {
+        confirmId = 'clear-export-confirm';
+        label = 'phiếu xuất kho';
+    } else {
+        confirmId = 'clear-all-confirm';
+        label = 'tất cả giao dịch';
+    }
+    
+    const confirmText = document.getElementById(confirmId).value.trim();
+    if (confirmText !== 'CONFIRM') {
+        window.WMS.showToast('Vui lòng nhập CONFIRM để xác nhận xóa', true);
+        return;
+    }
+    
+    if (!confirm(`⚠️ Bạn có chắc chắn muốn xóa ${label}?\n\nHành động này KHÔNG THỂ HOÀN TÁC!`)) {
+        return;
+    }
+    
+    showSafetyKeyModal(async function(key) {
+        try {
+            const result = await window.WMS.api('/data/clear-transactions', 'POST', {
+                data_type: dataType,
+                confirm_text: confirmText,
+                safety_key: key
+            });
+            if (result) {
+                window.WMS.showToast(result.message || 'Đã xóa dữ liệu');
+                document.getElementById(confirmId).value = '';
+            }
+        } catch (e) {
+            window.WMS.showToast(e.message || 'Lỗi xóa dữ liệu', true);
+        }
+    });
+}
+
+// --- RESET INVENTORY (yêu cầu khóa an toàn) ---
+async function resetInventory() {
+    const confirmText = document.getElementById('reset-inventory-confirm').value.trim();
+    if (confirmText !== 'CONFIRM') {
+        window.WMS.showToast('Vui lòng nhập CONFIRM để xác nhận reset', true);
+        return;
+    }
+    
+    if (!confirm('⚠️ Bạn có chắc chắn muốn RESET TOÀN BỘ tồn kho về 0?\n\nHành động này KHÔNG THỂ HOÀN TÁC!')) {
+        return;
+    }
+    
+    showSafetyKeyModal(async function(key) {
+        try {
+            const result = await window.WMS.api('/data/reset-inventory', 'POST', {
+                confirm_text: confirmText,
+                safety_key: key
+            });
+            if (result) {
+                window.WMS.showToast(result.message || 'Đã reset tồn kho');
+                document.getElementById('reset-inventory-confirm').value = '';
+            }
+        } catch (e) {
+            window.WMS.showToast(e.message || 'Lỗi reset tồn kho', true);
+        }
+    });
+}
+
+
+document.addEventListener('DOMContentLoaded', function(){
+    loadAppSettings();
+});
+</script>
+{% endblock %}

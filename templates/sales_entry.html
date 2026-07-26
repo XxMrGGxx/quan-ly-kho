@@ -1,0 +1,1156 @@
+{% extends "base.html" %}
+{% block page_title %}Sales Entry - Lên đơn nhanh{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Premium Design & Mobile optimization */
+        .sales-container {
+        display: grid;
+        grid-template-columns: 2fr 3fr;
+        gap: 24px;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 8px;
+        height: calc(100vh - 120px);
+        overflow: hidden;
+    }
+
+    @media (max-width: 992px) {
+        .sales-container {
+            grid-template-columns: 1fr;
+            height: auto;
+            overflow: visible;
+            padding-bottom: 100px; /* Space for sticky bottom bar */
+        }
+    }
+
+    @media (max-width: 768px) {
+        .sales-container {
+            padding: 0px;
+            gap: 10px;
+        }
+
+        /* Giảm biên cho cả 2 panel trên mobile */
+        .panel-body {
+            padding: 12px 12px;
+        }
+        .panel-header {
+            padding: 12px 14px;
+        }
+        .product-card {
+            padding: 10px 12px;
+        }
+    }
+
+    /* Tập trung cho cart để rộng hơn 2 bên */
+    @media (max-width: 480px) {
+        .sales-container {
+            padding: 0px;
+            gap: 8px;
+        }
+
+        /* Không tạo thêm "biên" bên trong panel cart */
+        .panel {
+            border-radius: 12px;
+        }
+
+        /* panel cart nằm bên phải: chỉnh padding để cart list rộng */
+        .sales-container > .panel:last-child .panel-body {
+            padding: 10px 8px;
+        }
+
+        /* Cart items đã có padding-right cho nút xóa; giảm padding trái/phải tổng */
+        .cart-item {
+            margin-left: 2px;
+            margin-right: 2px;
+        }
+    }
+
+    .panel {
+        background: var(--surface);
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    @media (max-width: 992px) {
+        .panel {
+            height: auto;
+            max-height: none;
+        }
+    }
+
+    .panel-header {
+        padding: 16px 20px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+    }
+
+    .panel-body {
+        padding: 20px;
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Customer search select components */
+    .search-wrapper {
+        position: relative;
+    }
+
+    .search-input {
+        width: 100%;
+        min-height: 48px;
+        font-size: 16px; /* Prevents iOS zoom */
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        background: #f8fafc;
+        transition: all 0.2s;
+    }
+
+    .search-input:focus {
+        border-color: var(--primary);
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        outline: none;
+    }
+
+    .search-results-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: #fff;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        max-height: 250px;
+        overflow-y: auto;
+        margin-top: 4px;
+        display: none;
+    }
+
+    .search-item {
+        padding: 12px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s;
+        font-size: 15px;
+    }
+
+    .search-item:last-child {
+        border-bottom: none;
+    }
+
+    .search-item:hover {
+        background: #eff6ff;
+    }
+
+    .selected-card {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        padding: 14px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Product Grid and Items */
+    .product-search-box {
+        margin-bottom: 12px;
+    }
+
+    .product-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .product-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .product-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+    }
+
+    .product-card:active {
+        transform: scale(0.98);
+    }
+
+    .product-details {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .product-name {
+        font-weight: 600;
+        font-size: 15px;
+        color: #1e293b;
+    }
+
+    .product-meta {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .product-price {
+        font-weight: 700;
+        color: var(--primary);
+        font-size: 15px;
+    }
+
+    .product-stock {
+        margin-left: 8px;
+        font-weight: 600;
+    }
+
+    .add-badge {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #eff6ff;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 600;
+        border: 1px solid #bfdbfe;
+        transition: all 0.2s;
+    }
+
+    .product-card:hover .add-badge {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    /* Cart Items style */
+    .cart-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        height: 100%;
+        color: #94a3b8;
+        padding: 40px 0;
+    }
+
+    .cart-item {
+        display: grid;
+        /* Compact columns to avoid wrapping */
+        grid-template-columns: 1.6fr 0.6fr 1fr 0.9fr 36px;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 10px;
+    }
+
+    @media (max-width: 480px) {
+        .cart-item {
+            grid-template-columns: 1fr;
+            gap: 6px;
+            position: relative;
+            padding-right: 46px; /* chừa chỗ cho nút xóa */
+            align-items: start;
+        }
+
+        /* mobile layout: 1 card = 1 cột 4 dòng */
+        .cart-item > .cart-row {
+            display: block;
+            width: 100%;
+        }
+
+        .cart-delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        /* ô input cho số lượng/đơn giá rộng để không che nội dung */
+        .cart-item input.qty-input {
+            width: 100% !important;
+            box-sizing: border-box;
+        }
+    }
+
+    .qty-control {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+    }
+
+    .qty-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: #f1f5f9;
+        font-size: 18px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s;
+    }
+
+    .qty-btn:hover {
+        background: #e2e8f0;
+    }
+
+    .qty-btn:active {
+        background: #cbd5e1;
+    }
+
+    .qty-input {
+        width: 50px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        border: none;
+        outline: none;
+        padding: 4px 0;
+    }
+
+    /* Prevent default spinners on quantity input */
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    .qty-input[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .cart-delete-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid #fee2e2;
+        background: #fff;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .cart-delete-btn:hover {
+        background: #fee2e2;
+    }
+
+    /* Sticky Footer for mobile screen */
+    .checkout-footer {
+        padding: 16px 20px;
+        border-top: 1px solid #e2e8f0;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    @media (max-width: 992px) {
+        .checkout-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -8px 20px rgba(0,0,0,0.08);
+            border-top: 1px solid #cbd5e1;
+            padding: 12px 16px;
+        }
+    }
+
+    .submit-order-btn {
+        width: 100%;
+        min-height: 52px;
+        font-size: 16px;
+        font-weight: 700;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0f2b4b, #1a4a7a);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .submit-order-btn:hover {
+        opacity: 0.95;
+    }
+
+    .submit-order-btn:active {
+        transform: scale(0.98);
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sales-container">
+    <!-- Left panel: Customers and Product Search -->
+    <div class="panel">
+        <div class="panel-header">
+            <h3 style="margin:0; font-size:16px;">📦 Bán hàng</h3>
+        </div>
+        <div class="panel-body">
+            <!-- Customer Section -->
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-weight: 600; color: #475569; font-size: 14px;">Khách hàng</label>
+                
+                <!-- Customer Search input -->
+                <div class="search-wrapper" id="customer-search-section">
+                    <input type="text" id="customer-search-input" class="search-input" placeholder="🔍 Gõ tên hoặc SĐT khách hàng..." autocomplete="off">
+                    <div id="customer-results" class="search-results-list"></div>
+                </div>
+
+                <!-- Customer Selected Card -->
+                <div id="customer-selected-card" class="selected-card" style="display: none;">
+                    <div>
+                        <div style="font-weight: 700; color: #1e3a8a; font-size: 16px;" id="sel-cust-name">Khách hàng A</div>
+                        <div style="font-size: 13px; color: #4b5563; margin-top: 2px;" id="sel-cust-phone">SĐT: 0987654321</div>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="resetCustomer()" style="border-radius: 8px;">Thay đổi</button>
+                </div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid rgba(148, 163, 184, 0.15); margin: 4px 0;">
+
+            <!-- Product Section -->
+            <div class="product-search-box">
+                <input type="text" id="product-search-input" class="search-input" placeholder="🔍 Tìm sản phẩm nhanh (tên, mã)..." autocomplete="off">
+            </div>
+
+            <!-- Product List -->
+            <div class="product-list" id="products-list-container">
+                <!-- Products dynamically rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Right panel: Cart and Submission -->
+    <div class="panel">
+        <div class="panel-header">
+            <h3 style="margin:0; font-size:16px;">🛒 Giỏ hàng (<span id="cart-count">0</span>)</h3>
+            <button type="button" onclick="clearCart()" class="btn btn-secondary btn-sm" style="color:#ef4444; border-radius:8px;">Xóa hết</button>
+        </div>
+        
+        <div class="panel-body" style="background: #fafafb;">
+            <!-- Cart empty state -->
+            <div id="cart-empty" class="cart-empty">
+                <div style="font-size: 40px;">🛍️</div>
+                <div style="font-weight:500;">Chưa có sản phẩm nào trong giỏ</div>
+                <div style="font-size: 13px; text-align:center;">Hãy tìm sản phẩm ở bảng bên trái và chạm để thêm vào giỏ.</div>
+            </div>
+
+            <!-- Cart list -->
+            <div id="cart-list" style="display:none; flex: 1; overflow-y: auto;">
+                <!-- Cart rows dynamically rendered -->
+            </div>
+
+            <!-- Notes -->
+            <div style="margin-top: 8px;">
+                <label style="font-weight: 600; color: #475569; font-size: 13px; display:block; margin-bottom: 6px;">Ghi chú đơn hàng</label>
+                <textarea id="notes" class="input" rows="2" placeholder="VD: Giao hàng giờ hành chính, gọi trước khi giao..." style="border-radius: 12px; font-size: 14px; resize:none;"></textarea>
+            </div>
+        </div>
+
+        <!-- Checkout summary & action button -->
+        <div class="checkout-footer">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 16px;">
+                <span style="color: #64748b; font-weight: 500;">Tổng tạm tính:</span>
+                <span style="font-size: 20px; font-weight: 800; color: var(--text);"><span id="temp-total">0</span> đ</span>
+            </div>
+            <button id="submitBtn" type="button" class="submit-order-btn" onclick="submitSalesOrder()">
+                <span>🚀 Gửi đơn xác nhận</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allCustomers = [];
+let allProducts = [];
+let selectedCustomer = null;
+let cart = {}; // product_id -> { product, quantity }
+let currentUser = null; // { id, full_name, role, warehouse_ids, warehouses }
+
+// ===== GPS TRACKING VARIABLES =====
+let gpsWatchId = null;
+let gpsLastPosition = null;
+let gpsInterval = null;
+let gpsRetryCount = 0;
+const MAX_GPS_RETRY = 3;
+
+// Detect mobile and iOS
+const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|Windows Phone/i.test(navigator.userAgent);
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+async function init() {
+    try {
+        // Lấy thông tin user hiện tại (bao gồm danh sách kho được gán)
+        currentUser = await window.WMS.api('/auth/me');
+        
+        const [custData, prodData] = await Promise.all([
+            window.WMS.api('/customers'),
+            window.WMS.api('/products?limit=500')
+        ]);
+
+        allCustomers = custData.items || [];
+        allProducts = prodData.items || [];
+
+        // Lọc sản phẩm theo kho được gán (nếu không phải admin)
+        const filteredProducts = filterProductsByWarehouse(allProducts);
+        
+        renderProductList(filteredProducts);
+        setupSearchEvents();
+        
+        // Hiển thị thông tin kho lên giao diện
+        renderWarehouseInfo();
+
+        // GPS: Tự động xin quyền và theo dõi vị trí (không cần nhấn nút)
+        console.log('📍 Auto-starting GPS tracking...');
+        autoStartGPS();
+    } catch (e) {
+        console.error("Lỗi khi load dữ liệu: ", e);
+        window.WMS.showToast("Lỗi kết nối máy chủ", true);
+    }
+}
+
+/**
+ * Lọc sản phẩm chỉ hiển thị hàng thuộc kho user được gán
+ * Admin xem được tất cả
+ */
+function filterProductsByWarehouse(products) {
+    if (!currentUser) return products;
+    
+    // Admin xem tất cả
+    if (currentUser.role === 'admin') return products;
+    
+    const whIds = currentUser.warehouse_ids || [];
+    if (whIds.length === 0) return []; // Không có kho nào
+    
+    return products.filter(p => whIds.includes(p.warehouse_id));
+}
+
+/**
+ * Hiển thị thông tin kho lên panel header
+ */
+function renderWarehouseInfo() {
+    if (!currentUser) return;
+    
+    const panelHeader = document.querySelector('.panel:first-child .panel-header');
+    if (!panelHeader) return;
+    
+    // Xóa badge cũ nếu có
+    const oldBadge = panelHeader.querySelector('.warehouse-badge');
+    if (oldBadge) oldBadge.remove();
+    
+    // Tạo badge hiển thị kho
+    const badge = document.createElement('span');
+    badge.className = 'warehouse-badge';
+    
+    if (currentUser.role === 'admin') {
+        badge.innerHTML = '🏭 Tất cả kho';
+        badge.style.cssText = 'font-size:12px; background:#dbeafe; color:#2563eb; padding:4px 10px; border-radius:20px; font-weight:500;';
+    } else {
+        const whNames = (currentUser.warehouses || []).map(w => w.name).join(', ');
+        badge.innerHTML = `🏭 ${whNames || 'Chưa gán kho'}`;
+        badge.style.cssText = 'font-size:12px; background:#dcfce7; color:#166534; padding:4px 10px; border-radius:20px; font-weight:500;';
+    }
+    
+    panelHeader.appendChild(badge);
+}
+
+// Render product list with dynamic filter
+function renderProductList(products) {
+    const container = document.getElementById('products-list-container');
+    container.innerHTML = '';
+    
+    if (products.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color: #94a3b8;">Không tìm thấy sản phẩm nào</div>`;
+        return;
+    }
+    
+    products.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'product-card';
+        div.onclick = () => addToCart(p);
+        
+        const effectivePrice = calcEffectivePrice(p.selling_price, p.discount_rate);
+        const formattedPrice = new Intl.NumberFormat('vi-VN').format(effectivePrice);
+        const stockStatus = p.stock > 0 
+            ? `<span class="product-stock" style="color: #10b981;">Còn ${p.stock}</span>` 
+            : `<span class="product-stock" style="color: #ef4444;">Hết hàng</span>`;
+            
+        div.innerHTML = `
+            <div class="product-details">
+                <span class="product-name">${window.WMS.escapeHtml(p.name)}</span>
+                <div class="product-meta">
+                    Mã: <strong>${window.WMS.escapeHtml(p.code)}</strong> | 
+                    Giá: <span class="product-price">${formattedPrice} đ</span>
+                    ${stockStatus}
+                </div>
+            </div>
+            <div class="add-badge">+</div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function setupSearchEvents() {
+    // Product Search filter
+    const prodSearch = document.getElementById('product-search-input');
+    prodSearch.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const sourceProducts = filterProductsByWarehouse(allProducts);
+        if (!query) {
+            renderProductList(sourceProducts);
+            return;
+        }
+
+        const filtered = sourceProducts.filter(p =>
+            p.name.toLowerCase().includes(query) ||
+            p.code.toLowerCase().includes(query)
+        );
+        renderProductList(filtered);
+    });
+
+    // Customer search dropdown logic
+    const custSearch = document.getElementById('customer-search-input');
+    const custResults = document.getElementById('customer-results');
+    
+    custSearch.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (!query) {
+            custResults.style.display = 'none';
+            return;
+        }
+        
+        const filtered = allCustomers.filter(c => 
+            c.name.toLowerCase().includes(query) || 
+            (c.phone && c.phone.includes(query))
+        );
+        
+        renderCustomerResults(filtered);
+    });
+    
+    // Close customer results list on clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#customer-search-section')) {
+            custResults.style.display = 'none';
+        }
+    });
+}
+
+function renderCustomerResults(customers) {
+    const custResults = document.getElementById('customer-results');
+    custResults.innerHTML = '';
+    
+    if (customers.length === 0) {
+        custResults.innerHTML = `<div style="padding:12px; color:#94a3b8; text-align:center;">Không tìm thấy khách hàng</div>`;
+        custResults.style.display = 'block';
+        return;
+    }
+    
+    customers.slice(0, 10).forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'search-item';
+        div.innerText = `${c.name} - ${c.phone || 'Không có SĐT'}`;
+        div.onclick = () => selectCustomer(c);
+        custResults.appendChild(div);
+    });
+    
+    custResults.style.display = 'block';
+}
+
+function selectCustomer(customer) {
+    selectedCustomer = customer;
+    document.getElementById('customer-search-input').value = '';
+    document.getElementById('customer-results').style.display = 'none';
+    document.getElementById('customer-search-section').style.display = 'none';
+    
+    document.getElementById('sel-cust-name').innerText = customer.name;
+    document.getElementById('sel-cust-phone').innerText = `SĐT: ${customer.phone || 'Không có SĐT'}`;
+    document.getElementById('customer-selected-card').style.display = 'flex';
+}
+
+function resetCustomer() {
+    selectedCustomer = null;
+    document.getElementById('customer-selected-card').style.display = 'none';
+    document.getElementById('customer-search-section').style.display = 'block';
+    setTimeout(() => document.getElementById('customer-search-input').focus(), 50);
+}
+
+// Cart management
+function addToCart(product) {
+    if (cart[product.id]) {
+        cart[product.id].quantity += 1;
+    } else {
+        cart[product.id] = {
+            product: product,
+            quantity: 1,
+            warehouse_id: product.warehouse_id || 1
+        };
+    }
+    updateCartUI();
+}
+
+function calcEffectivePrice(sellingPrice, discountRate) {
+    const price = window.WMS.safeNumber(sellingPrice);
+    const rate = Math.max(0, Math.min(100, window.WMS.safeNumber(discountRate)));
+    return price * (1 - rate / 100);
+}
+
+function removeFromCart(productId) {
+    delete cart[productId];
+    updateCartUI();
+}
+
+// Clear cart
+function clearCart() {
+    cart = {};
+    updateCartUI();
+}
+
+function changeQty(productId, amount) {
+    if (!cart[productId]) return;
+    
+    const newQty = cart[productId].quantity + amount;
+    if (newQty <= 0) {
+        delete cart[productId];
+    } else {
+        cart[productId].quantity = newQty;
+    }
+    updateCartUI();
+}
+
+function setQty(productId, value) {
+    if (!cart[productId]) return;
+    
+    const qty = parseFloat(value);
+    if (isNaN(qty) || qty <= 0) {
+        delete cart[productId];
+    } else {
+        cart[productId].quantity = qty;
+    }
+    updateCartUI();
+}
+
+function setUnitPrice(productId, value) {
+    if (!cart[productId]) return;
+
+    // allow comma decimal
+    const v = parseFloat(String(value).replace(',', '.'));
+    if (isNaN(v) || v <= 0) {
+        cart[productId].unit_price_override = null;
+    } else {
+        cart[productId].unit_price_override = v;
+    }
+    updateCartUI();
+}
+
+function updateCartUI() {
+    const cartList = document.getElementById('cart-list');
+    const cartEmpty = document.getElementById('cart-empty');
+    const cartCount = document.getElementById('cart-count');
+    const tempTotal = document.getElementById('temp-total');
+    
+    const cartKeys = Object.keys(cart);
+    cartCount.innerText = cartKeys.reduce((acc, k) => acc + cart[k].quantity, 0);
+    
+    if (cartKeys.length === 0) {
+        cartList.style.display = 'none';
+        cartEmpty.style.display = 'flex';
+        tempTotal.innerText = '0';
+        return;
+    }
+    
+    cartEmpty.style.display = 'none';
+    cartList.style.display = 'block';
+    cartList.innerHTML = '';
+    
+    let grandTotal = 0;
+    
+    cartKeys.forEach(key => {
+        const item = cart[key];
+        const p = item.product;
+
+        const effectiveUnitPrice = calcEffectivePrice(p.selling_price, p.discount_rate);
+        const unitPrice = (item.unit_price_override != null)
+            ? window.WMS.safeNumber(item.unit_price_override)
+            : effectiveUnitPrice;
+
+        const total = unitPrice * item.quantity;
+        grandTotal += total;
+        
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+            <!-- 1 cột 4 dòng (mobile yêu cầu), nút xóa absolute (không che nội dung) -->
+            <div class="cart-row cart-row-name" style="width:100%;">
+                <div style="font-weight:600; color:#1e293b; font-size:14px; line-height:1.25;">${window.WMS.escapeHtml(p.name)}</div>
+            </div>
+
+            <div class="cart-row cart-row-qty" style="width:100%;">
+                <div style="font-size:12px; color:#64748b; font-weight:600; margin-bottom:4px;">Số lượng</div>
+                <div class="qty-control" style="justify-content:flex-start;">
+                    <input type="number" class="qty-input" style="width:100%;" value="${item.quantity}" min="0.1" step="any" onchange="setQty(${p.id}, this.value)">
+                </div>
+            </div>
+
+            <div class="cart-row cart-row-unitprice" style="width:100%;">
+                <div style="font-size:12px; color:#64748b; font-weight:600; margin-bottom:4px;">Đơn giá</div>
+                <div>
+                    <input 
+                        type="number"
+                        class="qty-input unit-price-input"
+                        style="width:100%;"
+                        value="${unitPrice}"
+                        min="0.1"
+                        step="any"
+                        onchange="setUnitPrice(${p.id}, this.value)"
+                    >
+                </div>
+            </div>
+
+            <div class="cart-row cart-row-total" style="width:100%;">
+                <div style="font-size:12px; color:#64748b; font-weight:600; margin-bottom:4px;">Thành tiền</div>
+                <div style="font-weight:800; font-size:15px; color:#0f172a; text-align:right; width:100%;">
+                    ${new Intl.NumberFormat('vi-VN').format(total)} đ
+                </div>
+            </div>
+
+            <div class="cart-delete">
+                <button type="button" class="cart-delete-btn" onclick="removeFromCart(${p.id})">❌</button>
+            </div>
+        `;
+        cartList.appendChild(div);
+    });
+    
+    tempTotal.innerText = new Intl.NumberFormat('vi-VN').format(grandTotal);
+}
+
+// Submission
+async function submitSalesOrder() {
+    if (!selectedCustomer) {
+        window.WMS.showToast("Vui lòng chọn khách hàng!", true);
+        document.getElementById('customer-search-input').focus();
+        return;
+    }
+    
+    const cartKeys = Object.keys(cart);
+    if (cartKeys.length === 0) {
+        window.WMS.showToast("Giỏ hàng rỗng! Vui lòng chọn sản phẩm.", true);
+        return;
+    }
+    
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span>⏳ Đang gửi đơn...</span>`;
+    
+    const items = cartKeys.map(k => {
+        const it = cart[k];
+        const p = it.product;
+
+        const effectiveUnitPrice = calcEffectivePrice(p.selling_price, p.discount_rate);
+        const unitPrice = (it.unit_price_override != null)
+            ? window.WMS.safeNumber(it.unit_price_override)
+            : effectiveUnitPrice;
+
+        return {
+            product_id: parseInt(k),
+            warehouse_id: it.warehouse_id || p.warehouse_id || 1,
+            quantity: parseFloat(it.quantity),
+            unit_price: unitPrice
+        };
+    });
+    
+    const orderData = {
+        partner_id: parseInt(selectedCustomer.id),
+        order_date: new Date().toISOString().split('T')[0],
+        notes: document.getElementById('notes').value,
+        discount_amount: 0,
+        paid_amount: items.reduce((sum, it) => sum + it.quantity * it.unit_price, 0),
+        payment_method: 'cash',
+        items: items
+    };
+    
+    try {
+        const res = await window.WMS.api('/export_orders', 'POST', orderData);
+        if (res) {
+            window.WMS.showToast('Gửi phiếu xuất thành công! Đã tạo trạng thái draft.');
+            clearCart();
+            resetCustomer();
+            document.getElementById('notes').value = '';
+        }
+    } catch(e) {
+        window.WMS.showToast('Có lỗi xảy ra: ' + e.message, true);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>🚀 Gửi đơn xác nhận</span>`;
+    }
+}
+
+// ===== GPS TRACKING - SILENT AUTO-START =====
+
+/**
+ * Auto-start GPS tracking without user interaction
+ * Silently requests permission and tracks position - no UI shown
+ */
+function autoStartGPS() {
+    if (!navigator.geolocation) {
+        console.warn('📍 GPS not supported');
+        return;
+    }
+    
+    // Check HTTPS (critical for mobile)
+    if (window.location.protocol !== 'https:' && 
+        window.location.hostname !== 'localhost' && 
+        window.location.hostname !== '127.0.0.1') {
+        console.warn('📍 HTTPS required for GPS on mobile');
+        return;
+    }
+    
+    // Use setTimeout to break out of the event loop (helps iOS)
+    setTimeout(() => {
+        console.log('📍 Auto-starting GPS tracking...');
+        startGPSTracking();
+    }, isIOS ? 400 : 200);
+}
+
+/**
+ * Main GPS tracking function - silent, no UI updates
+ */
+function startGPSTracking() {
+    if (!navigator.geolocation) return;
+    
+    console.log('📍 Starting GPS tracking...');
+    
+    // Get initial position
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            console.log('📍 GPS position acquired:', position.coords.latitude, position.coords.longitude);
+            gpsLastPosition = position;
+            gpsRetryCount = 0;
+            
+            // Send position to server
+            sendGPSPosition(position);
+            
+            // Start continuous watching
+            startWatchingGPS();
+        },
+        (error) => {
+            console.error('📍 GPS getCurrentPosition error:', error.code, error.message);
+            handleGPSError(error);
+        },
+        { 
+            enableHighAccuracy: true, 
+            timeout: isIOS ? 20000 : 15000,
+            maximumAge: 60000
+        }
+    );
+}
+
+/**
+ * Handle GPS errors with retry logic - silent, no UI
+ */
+function handleGPSError(error) {
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            console.warn('📍 GPS permission denied');
+            return;
+            
+        case error.POSITION_UNAVAILABLE:
+            console.warn('📍 GPS position unavailable');
+            break;
+            
+        case error.TIMEOUT:
+            console.warn('📍 GPS timeout');
+            break;
+            
+        default:
+            console.warn('📍 GPS error:', error.message);
+    }
+    
+    // Retry logic for timeout
+    if (error.code === error.TIMEOUT && gpsRetryCount < MAX_GPS_RETRY) {
+        gpsRetryCount++;
+        console.log(`📍 Retry GPS (${gpsRetryCount}/${MAX_GPS_RETRY})...`);
+        setTimeout(() => {
+            startGPSTracking();
+        }, 3000);
+    } else {
+        // Still try watch mode even if getCurrentPosition fails
+        startWatchingGPS();
+    }
+}
+
+/**
+ * Start continuous GPS watching - silent, no UI
+ */
+function startWatchingGPS() {
+    if (gpsWatchId !== null) {
+        navigator.geolocation.clearWatch(gpsWatchId);
+        gpsWatchId = null;
+    }
+    
+    console.log('📍 Starting GPS watch...');
+    
+    gpsWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+            gpsLastPosition = position;
+            sendGPSPosition(position);
+        },
+        (error) => {
+            console.warn('📍 GPS watch error:', error.message);
+        },
+        { 
+            enableHighAccuracy: true, 
+            timeout: 20000,
+            maximumAge: 60000
+        }
+    );
+    
+    // Backup interval: send position every 3 minutes even if watch fails
+    if (gpsInterval) clearInterval(gpsInterval);
+    gpsInterval = setInterval(() => {
+        if (gpsLastPosition) {
+            sendGPSPosition(gpsLastPosition);
+        } else {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        gpsLastPosition = pos;
+                        sendGPSPosition(pos);
+                    },
+                    () => {},
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            }
+        }
+    }, 3 * 60 * 1000);
+}
+
+/**
+ * Send GPS position to server - silent, no UI
+ */
+async function sendGPSPosition(position) {
+    try {
+        const data = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy || 0
+        };
+        await window.WMS.api('/sales/gps-log', 'POST', data);
+    } catch (e) {
+        console.warn('📍 GPS: Cannot send position to server:', e.message);
+    }
+}
+
+/**
+ * Stop GPS tracking
+ */
+function stopGPSTracking() {
+    console.log('📍 Stopping GPS tracking...');
+    
+    if (gpsWatchId !== null) {
+        navigator.geolocation.clearWatch(gpsWatchId);
+        gpsWatchId = null;
+    }
+    if (gpsInterval !== null) {
+        clearInterval(gpsInterval);
+        gpsInterval = null;
+    }
+    gpsRetryCount = 0;
+}
+
+/**
+ * Debug helper - call from console: window.debugGPS()
+ */
+window.debugGPS = function() {
+    console.log('🔍 GPS Debug Info:');
+    console.log('- navigator.geolocation:', !!navigator.geolocation);
+    console.log('- Protocol:', window.location.protocol);
+    console.log('- Hostname:', window.location.hostname);
+    console.log('- isMobile:', isMobile);
+    console.log('- isIOS:', isIOS);
+    console.log('- gpsWatchId:', gpsWatchId);
+    console.log('- gpsLastPosition:', gpsLastPosition);
+    console.log('- gpsRetryCount:', gpsRetryCount);
+    
+    if (navigator.permissions) {
+        navigator.permissions.query({ name: 'geolocation' })
+            .then(result => {
+                console.log('- Permission state:', result.state);
+            })
+            .catch(err => {
+                console.log('- Permission query error:', err);
+            });
+    }
+};
+
+// Handle page visibility change - restart GPS when returning
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        if (gpsWatchId !== null) {
+            console.log('📍 Page hidden, stopping GPS...');
+            stopGPSTracking();
+        }
+    } else {
+        // Restart GPS silently when page becomes visible again
+        if (gpsWatchId === null) {
+            console.log('📍 Page visible, restarting GPS...');
+            autoStartGPS();
+        }
+    }
+});
+
+// Initialize the page
+init();
+</script>
+{% endblock %}

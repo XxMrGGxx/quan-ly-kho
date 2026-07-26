@@ -1,0 +1,61 @@
+<div class="report-section" id="rpt-inventory">
+    <div id="inv-loading" class="text-center" style="padding:20px;color:#94a3b8"><i>Đang tải báo cáo tồn kho...</i></div>
+    <div id="inv-error" class="text-center" style="display:none"></div>
+    <div id="inv-content" style="display:none">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Mã hàng</th>
+                    <th>Tên hàng hóa</th>
+                    <th>ĐVT</th>
+                    <th>Tồn đầu kỳ (SL)</th>
+                    <th>Nhập trong kỳ (SL)</th>
+                    <th>Xuất trong kỳ (SL)</th>
+                    <th>Tồn cuối kỳ (SL)</th>
+                    <th>Đơn giá (VNĐ)</th>
+                    <th>Thành tiền tồn cuối kỳ</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody id="inv-body"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="9" style="text-align:right;font-weight:bold;">Tổng thành tiền tồn cuối kỳ:</td>
+                    <td id="inv-total" style="font-weight:bold;text-align:right;">0 đ</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+<script>
+(function(){
+    var f = window.reportFilters || {};
+    var params = 'start_date='+f.start_date+'&end_date='+f.end_date+(f.warehouse_id?'&warehouse_id='+f.warehouse_id:'');
+    window.WMS.api('/reports/inventory?'+params).then(function(inv){
+        document.getElementById('inv-loading').style.display='none';
+        document.getElementById('inv-content').style.display='';
+        var body=document.getElementById('inv-body');
+        var total=0;
+        if(inv.items&&inv.items.length>0){
+            var rows=[];
+            inv.items.forEach(function(item,idx){
+                var val=window.WMS.safeNumber(item.total_value_end)||0;
+                total+=val;
+                var note=item.note||'';
+                rows.push('<tr><td data-label="STT">'+(idx+1)+'</td><td data-label="Mã hàng">'+window.WMS.escapeHtml(item.code||'')+'</td><td data-label="Tên hàng hóa">'+window.WMS.escapeHtml(item.name||'')+'</td><td data-label="ĐVT">'+window.WMS.escapeHtml(item.unit_name||'')+'</td><td data-label="Tồn đầu kỳ (SL)" style="text-align:right">'+window.WMS.safeNumber(item.stock_begin)+'</td><td data-label="Nhập trong kỳ (SL)" style="text-align:right">'+window.WMS.safeNumber(item.qty_import)+'</td><td data-label="Xuất trong kỳ (SL)" style="text-align:right">'+window.WMS.safeNumber(item.qty_export)+'</td><td data-label="Tồn cuối kỳ (SL)" style="text-align:right">'+window.WMS.safeNumber(item.stock_end)+'</td><td data-label="Đơn giá (VNĐ)" style="text-align:right">'+window.WMS.formatMoney(item.cost_price)+'</td><td data-label="Thành tiền tồn cuối kỳ" style="text-align:right">'+window.WMS.formatMoney(val)+'</td><td data-label="Ghi chú">'+window.WMS.escapeHtml(note)+'</td></tr>');
+            });
+            body.innerHTML=rows.join('');
+        }else{
+            body.innerHTML='<tr><td colspan="11" style="text-align:center;color:#999;">Không có dữ liệu</td></tr>';
+        }
+        document.getElementById('inv-total').innerText=window.WMS.formatMoney(total);
+    }).catch(function(e){
+        document.getElementById('inv-loading').style.display='none';
+        var err=document.getElementById('inv-error');
+        err.style.display='';
+        err.innerHTML='<span style="color:#dc2626">Lỗi tải dữ liệu tồn kho: '+e.message+'</span>';
+    });
+})();
+</script>

@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+{% block page_title %}Quản lý Bản quyền{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <span>🔐 Thông tin bản quyền phần mềm</span>
+    </div>
+    <div class="card-body" id="license-status">
+        <div style="text-align:center;padding:40px;">
+            <div class="spinner"></div> Đang kiểm tra...
+        </div>
+    </div>
+</div>
+
+
+<div id="activation-section">
+    <div class="card">
+        <div class="card-header">
+            <span>🔑 Kích hoạt bản quyền</span>
+        </div>
+        <div class="card-body">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+                <div>
+                    <h4>1. Lấy Machine ID</h4>
+                    <p style="color:#64748b;font-size:0.9rem;margin:8px 0;">
+                        Sao chép Machine ID bên dưới và gửi cho nhà cung cấp để nhận mã kích hoạt.
+                    </p>
+                    <div style="display:flex; gap:8px; margin-top:12px;">
+                        <input type="text" id="machine-id" class="input" readonly style="font-family:monospace;background:#f8fafc;">
+                        <button class="btn btn-secondary" onclick="copyMachineId()">📋 Copy</button>
+                        <button class="btn btn-secondary" onclick="loadMachineId()">🔄</button>
+                    </div>
+                </div>
+                <div>
+                    <h4>2. Nhập mã kích hoạt</h4>
+                    <p style="color:#64748b;font-size:0.9rem;margin:8px 0;">
+                        Nhập mã kích hoạt do nhà cung cấp cấp vào ô bên dưới.
+                    </p>
+                    <div style="display:flex; gap:8px; margin-top:12px;">
+                        <input type="text" id="activation-key" class="input" placeholder="OFFLINE-xxx..." style="font-family:monospace;text-transform:uppercase;" oninput="previewKeyInfo()">
+                        <button class="btn btn-secondary" onclick="decodeAndPreviewKey()">👁️ Kiểm tra</button>
+                        <button class="btn btn-primary" onclick="activateLicense()">Kích hoạt</button>
+                    </div>
+                    <!-- Key preview area -->
+                    <div id="key-preview" style="display:none; margin-top:12px; padding:12px; border-radius:8px;"></div>
+                    <div style="margin-top:12px; padding:12px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+                        <p style="margin:0 0 8px 0; font-weight:600; font-size:0.85rem;">Chưa có mã kích hoạt?</p>
+                        <button class="btn btn-warning btn-sm" onclick="startTrial()">🆓 Dùng thử 30 ngày</button>
+                        <small style="color:#64748b;margin-left:8px;">(Tự động kích hoạt bản dùng thử)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadLicenseStatus() {
+    const statusDiv = document.getElementById('license-status');
+    const activationSection = document.getElementById('activation-section');
+    try {
+        const data = await window.WMS.api('/license/check');
+        const status = data.status || 'none';
+        
+        if (status === 'active') {
+            // === ĐÃ KÍCH HOẠT BẢN QUYỀN ===
+            activationSection.style.display = 'none';
+            const info = data.info || {};
+            const daysLeft = info.days_left || 0;
+            const daysClass = daysLeft < 30 ? 'badge-warning' : 'badge-success';
+            
+            statusDiv.innerHTML = `
+                <div style="text-align:center;padding:20px;">
+                    <div style="font-size:3rem;margin-bottom:16px;">✅</div>
+                    <h2 style="color:#166534;margin-bottom:8px;">Phần mềm đã được kích hoạt</h2>
+                    <div style="display:inline-block;padding:4px 16px;border-radius:99px;background:#dbeafe;color:#2563eb;font-weight:600;font-size:0.85rem;margin-bottom:16px;">
+                        Bản quyền chính thức
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:24px;">
+                        <div class="card" style="padding:16px;text-align:center;">
+                            <div style="font-size:2rem;font-weight:700;color:var(--primary);">${window.WMS.escapeHtml(info.company || '-')}</div>
+                            <div style="color:#64748b;font-size:0.85rem;">Đơn vị</div>
+                        </div>
+                        <div class="card" style="padding:16px;text-align:center;">
+                            <div style="font-size:2rem;font-weight:700;color:#10b981;">${daysLeft}</div>
+                            <div style="color:#64748b;font-size:0.85rem;">Ngày còn lại</div>
+                        </div>
+                        <div class="card" style="padding:16px;text-align:center;">
+                            <div style="font-size:2rem;font-weight:700;color:#f59e0b;">${window.WMS.safeNumber(info.max_users)}</div>
+                            <div style="color:#64748b;font-size:0.85rem;">Số người dùng tối đa</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:16px;padding:12px;background:#f0fdf4;border-radius:8px;color:#166534;">
+                        ${window.WMS.escapeHtml(data.message)}
+                    </div>
+                </div>
+            `;
+        } else if (status === 'trial') {
+            // === ĐANG DÙNG THỬ ===
+            activationSection.style.display = '';
+            const info = data.info || {};
+            const daysLeft = info.days_left || 0;
+            
+            statusDiv.innerHTML = `
+                <div style="text-align:center;padding:20px;">
+                    <div style="font-size:3rem;margin-bottom:16px;">⏳</div>
+                    <h2 style="color:#92400e;margin-bottom:8px;">Đang dùng thử</h2>
+                    <div style="display:inline-block;padding:4px 16px;border-radius:99px;background:#fef3c7;color:#92400e;font-weight:600;font-size:0.85rem;margin-bottom:16px;">
+                        Còn ${daysLeft} ngày
+                    </div>
+                    <div style="max-width:500px;margin:0 auto;">
+                        <p style="color:#64748b;margin-bottom:16px;">
+                            Bạn đang sử dụng phiên bản <strong>dùng thử</strong> với các giới hạn:
+                        </p>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;">
+                            <div class="card" style="padding:12px;text-align:center;background:#f8fafc;">
+                                <div style="font-size:1.5rem;font-weight:700;color:#f59e0b;">${window.WMS.safeNumber(info.max_users)}</div>
+                                <div style="color:#64748b;font-size:0.85rem;">Người dùng tối đa</div>
+                            </div>
+                            <div class="card" style="padding:12px;text-align:center;background:#f8fafc;">
+                                <div style="font-size:1.5rem;font-weight:700;color:#f59e0b;">${daysLeft}</div>
+                                <div style="color:#64748b;font-size:0.85rem;">Ngày dùng thử còn lại</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top:16px;padding:12px;background:#fffbeb;border-radius:8px;color:#92400e;">
+                        ${window.WMS.escapeHtml(data.message)}. Nhập mã kích hoạt bên dưới để nâng cấp lên bản quyền chính thức.
+                    </div>
+                </div>
+            `;
+        } else if (status === 'trial_expired') {
+            // === HẾT HẠN DÙNG THỬ ===
+            activationSection.style.display = '';
+            statusDiv.innerHTML = `
+                <div style="text-align:center;padding:40px;">
+                    <div style="font-size:3rem;margin-bottom:16px;">⏰</div>
+                    <h2 style="color:#dc2626;margin-bottom:8px;">Phiên bản dùng thử đã hết hạn</h2>
+                    <p style="color:#64748b;margin-bottom:16px;max-width:500px;margin:0 auto 16px;">
+                        Thời gian dùng thử 30 ngày đã kết thúc. Vui lòng nhập mã kích hoạt bản quyền chính thức để tiếp tục sử dụng phần mềm.
+                    </p>
+                    <div style="margin-top:16px;padding:12px;background:#fef2f2;border-radius:8px;color:#dc2626;display:inline-block;">
+                        ${window.WMS.escapeHtml(data.message)}
+                    </div>
+                </div>
+            `;
+        } else if (status === 'expired') {
+            // === HẾT HẠN BẢN QUYỀN ===
+            activationSection.style.display = 'none';
+            statusDiv.innerHTML = `
+                <div style="text-align:center;padding:40px;">
+                    <div style="font-size:3rem;margin-bottom:16px;">⏰</div>
+                    <h2 style="color:#dc2626;margin-bottom:8px;">Bản quyền đã hết hạn</h2>
+                    <p style="color:#64748b;margin-bottom:16px;">Vui lòng gia hạn bản quyền để tiếp tục sử dụng phần mềm.</p>
+                    <div style="margin-top:16px;padding:12px;background:#fef2f2;border-radius:8px;color:#dc2626;display:inline-block;">
+                        ${window.WMS.escapeHtml(data.message)}
+                    </div>
+                </div>
+            `;
+        } else {
+            // === CHƯA CÓ BẢN QUYỀN ===
+            activationSection.style.display = '';
+            statusDiv.innerHTML = `
+                <div style="text-align:center;padding:40px;">
+                    <div style="font-size:3rem;margin-bottom:16px;">❌</div>
+                    <h2 style="color:#dc2626;margin-bottom:8px;">Chưa kích hoạt phần mềm</h2>
+                    <p style="color:#64748b;margin-bottom:16px;max-width:500px;margin:0 auto 16px;">
+                        Vui lòng nhập mã kích hoạt ở mục bên dưới hoặc <strong>dùng thử miễn phí 30 ngày</strong> để bắt đầu sử dụng phần mềm.
+                    </p>
+                    <div style="margin-top:16px;padding:12px;background:#fef2f2;border-radius:8px;color:#dc2626;display:inline-block;">
+                        ${window.WMS.escapeHtml(data.message)}
+                    </div>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('License check error:', error);
+        statusDiv.innerHTML = `
+            <div style="text-align:center;padding:40px;">
+                <div style="font-size:3rem;margin-bottom:16px;">⚠️</div>
+                <h2 style="color:#dc2626;margin-bottom:8px;">Lỗi kiểm tra bản quyền</h2>
+                <p style="color:#64748b;">${window.WMS.escapeHtml(error.message || 'Không thể kết nối đến máy chủ')}</p>
+            </div>
+        `;
+    }
+}
+
+async function loadMachineId() {
+    try {
+        const data = await window.WMS.api('/license/machine-id');
+        document.getElementById('machine-id').value = data.machine_id || 'Không thể lấy Machine ID';
+    } catch (error) {
+        window.WMS.showToast('Lỗi lấy Machine ID');
+    }
+}
+
+function copyMachineId() {
+    const input = document.getElementById('machine-id');
+    input.select();
+    document.execCommand('copy');
+    window.WMS.showToast('Đã sao chép Machine ID');
+}
+
+function previewKeyInfo() {
+    // Optional: show hint when typing
+    const key = document.getElementById('activation-key').value.trim();
+    const previewDiv = document.getElementById('key-preview');
+    if (key.length < 10) {
+        previewDiv.style.display = 'none';
+        return;
+    }
+    // Show loading state
+    previewDiv.style.display = '';
+    previewDiv.innerHTML = '<span style="color:#64748b;">Đang kiểm tra key...</span>';
+}
+
+async function decodeAndPreviewKey() {
+    const key = document.getElementById('activation-key').value.trim();
+    const previewDiv = document.getElementById('key-preview');
+
+    if (!key) {
+        window.WMS.showToast('Vui lòng nhập mã kích hoạt', true);
+        return;
+    }
+
+    try {
+        const result = await window.WMS.api('/license/decode-key', 'POST', { key: key });
+        previewDiv.style.display = '';
+
+        if (result.valid) {
+            // Key is valid - show green info
+            const info = result.info || {};
+            previewDiv.innerHTML = `
+                <div style="background:#dcfce7; border:1px solid #86efac; border-radius:8px; padding:12px;">
+                    <div style="font-weight:600; color:#166534; margin-bottom:8px;">✅ ${window.WMS.escapeHtml(result.message)}</div>
+                    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; font-size:0.85rem;">
+                        <div><strong>Đơn vị:</strong> ${window.WMS.escapeHtml(info.company || '-')}</div>
+                        <div><strong>Thời hạn:</strong> ${info.expiry_days} ngày</div>
+                        <div><strong>User tối đa:</strong> ${info.max_users}</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Key invalid - show red warning
+            const info = result.info || {};
+            previewDiv.innerHTML = `
+                <div style="background:#fef2f2; border:1px solid #fecaca; border-radius:8px; padding:12px;">
+                    <div style="font-weight:600; color:#dc2626; margin-bottom:8px;">❌ ${window.WMS.escapeHtml(result.message)}</div>
+                    ${info.company ? `<div style="font-size:0.85rem; color:#64748b;">📋 Thông tin trong key: <strong>${window.WMS.escapeHtml(info.company)}</strong> - ${info.expiry_days} ngày - ${info.max_users} users</div>` : ''}
+                </div>
+            `;
+        }
+    } catch (error) {
+        previewDiv.style.display = '';
+        previewDiv.innerHTML = `<div style="color:#dc2626;">Lỗi kiểm tra key: ${error.message}</div>`;
+    }
+}
+
+async function activateLicense() {
+    const key = document.getElementById('activation-key').value.trim();
+    if (!key) {
+        window.WMS.showToast('Vui lòng nhập mã kích hoạt', true);
+        return;
+    }
+    
+    try {
+        const result = await window.WMS.api('/license/activate', 'POST', { key: key });
+        if (result.valid) {
+            window.WMS.showToast('✅ ' + (result.message || 'Kích hoạt thành công!'));
+            loadLicenseStatus();
+        } else {
+            window.WMS.showToast(result.message || 'Kích hoạt thất bại', true);
+        }
+    } catch (error) {
+        window.WMS.showToast(error.message || 'Không thể kết nối', true);
+    }
+}
+
+async function startTrial() {
+    if (!confirm('Bạn có muốn kích hoạt bản dùng thử miễn phí 30 ngày không?')) {
+        return;
+    }
+    
+    try {
+        const result = await window.WMS.api('/license/init-trial', 'POST');
+        if (result.success) {
+            window.WMS.showToast('✅ ' + (result.message || 'Đã kích hoạt bản dùng thử!'));
+            loadLicenseStatus();
+        } else {
+            window.WMS.showToast(result.message || 'Không thể kích hoạt dùng thử', true);
+        }
+    } catch (error) {
+        window.WMS.showToast(error.message || 'Không thể kết nối', true);
+    }
+}
+
+async function deactivateLicense() {
+    if (!confirm('Bạn có chắc chắn muốn hủy kích hoạt bản quyền? Phần mềm sẽ chuyển sang chế độ chưa đăng ký.')) {
+        return;
+    }
+    try {
+        const result = await window.WMS.api('/license/deactivate', 'POST');
+        if (result) {
+            window.WMS.showToast('Đã hủy kích hoạt');
+            loadLicenseStatus();
+        }
+    } catch (error) {
+        window.WMS.showToast(error.message || 'Không thể hủy kích hoạt', true);
+    }
+}
+
+// Khởi tạo
+loadLicenseStatus();
+loadMachineId();
+</script>
+{% endblock %}

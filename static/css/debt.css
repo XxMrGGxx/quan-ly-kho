@@ -1,0 +1,125 @@
+
+.tab-btn {
+    padding: 8px 14px;
+    background: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 14px;
+    color: #64748b;
+    border-radius: 999px;
+    transition: all 0.18s ease;
+}
+.tab-btn:hover { background: #f8fafc; border-color: #e2e8f0; color: #334155; }
+.tab-btn.active {
+    color: #2563eb;
+    border-color: rgba(37, 99, 235, 0.35);
+    background: rgba(37, 99, 235, 0.08);
+    font-weight: 600;
+}
+.debt-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 12px;
+    border: 1px solid transparent;
+}
+.debt-over-limit { color: #dc2626; background: #fee2e2; border-color: rgba(220,38,38,0.18); }
+.debt-normal { color: #059669; background: #d1fae5; border-color: rgba(5,150,105,0.18); }
+.debt-warning { color: #d97706; background: #fffbeb; border-color: rgba(217,119,6,0.18); }
+
+/* Row coloring for merged debt table */
+.debt-row-normal {
+    background-color: #f0fdf4;
+}
+.debt-row-normal:hover {
+    background-color: #dcfce7;
+}
+
+.debt-row-warning {
+    background-color: #fffbeb;
+}
+.debt-row-warning:hover {
+    background-color: #fef3c7;
+}
+
+.debt-row-over-limit {
+    background-color: #fef2f2;
+}
+.debt-row-over-limit:hover {
+    background-color: #fee2e2;
+}
+
+/* Type badge styling */
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+.type-customer {
+    color: #1e40af;
+    background: #dbeafe;
+    border: 1px solid rgba(30, 64, 175, 0.2);
+}
+.type-supplier {
+    color: #065f46;
+    background: #d1fae5;
+    border: 1px solid rgba(6, 95, 70, 0.2);
+}
+
+.report-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+}
+.report-filter .field {
+    flex: 1 1 0;
+    min-width: 180px;
+}
+.report-filter .field label { 
+    display: block; 
+    font-size: 12px; 
+    color: #64748b; 
+    margin-bottom: 6px; 
+    font-weight: 600; 
+}
+.report-filter .actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+    align-items: flex-end;
+}
+.report-filter .actions .btn {
+    height: 36px;
+    white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+    .report-filter .field {
+        min-width: 150px;
+    }
+}
+
+@media (max-width: 768px) {
+    .report-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .report-filter .field {
+        min-width: auto;
+        width: 100%;
+    }
+    .report-filter .actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    .report-filter .actions .btn {
+        flex: 1;
+    }
+}

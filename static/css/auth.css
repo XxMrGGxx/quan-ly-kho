@@ -1,0 +1,454 @@
+/* ========== RESET & BASE ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #0f2b4b 0%, #1a4a7a 50%, #2d6da8 100%);
+    padding: 20px;
+    position: relative;
+}
+
+/* ========== BACKGROUND DECORATION ========== */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
+    animation: rotateBg 60s linear infinite;
+    z-index: 0;
+}
+
+@keyframes rotateBg {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========== MAIN BOX ========== */
+.box {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 48px 40px 40px;
+    max-width: 440px;
+    width: 100%;
+    box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.box:hover {
+    transform: translateY(-4px);
+}
+
+/* ========== BRANDING / LOGO ========== */
+.logo {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 8px;
+    display: block;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.box h2 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #0f2b4b;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+}
+
+/* ========== SUBTITLE / QUẢNG CÁO NHẸ ========== */
+.box .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #6b7a8f;
+    margin-bottom: 28px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
+}
+
+.box .subtitle span {
+    color: #e67e22;
+    font-weight: 600;
+}
+
+/* ========== FEATURE BADGES (Quảng cáo ngắn) ========== */
+.feature-badges {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+
+.feature-badges .badge {
+    background: linear-gradient(135deg, #eef2f7, #e4e9f2);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #1a4a7a;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+}
+
+.feature-badges .badge:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #1a4a7a, #2d6da8);
+    color: white;
+    border-color: transparent;
+}
+
+.feature-badges .badge .icon {
+    font-size: 14px;
+}
+
+/* ========== MESSAGE ========== */
+.msg {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: none;
+    border-left: 4px solid #dc2626;
+    animation: shake 0.4s ease;
+}
+
+.msg.show {
+    display: block;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+.msg.success {
+    background: #dcfce7;
+    color: #16a34a;
+    border-left-color: #16a34a;
+}
+
+/* ========== FORM ========== */
+#loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.input-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.input-group label .label-icon {
+    font-size: 16px;
+}
+
+.input-group input {
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+    color: #0f172a;
+    outline: none;
+    font-family: inherit;
+}
+
+.input-group input::placeholder {
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.input-group input:focus {
+    border-color: #2d6da8;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(45, 109, 168, 0.12);
+}
+
+.input-group input:hover {
+    border-color: #94a3b8;
+}
+
+/* ========== OPTIONS ROW (Remember + Forgot) ========== */
+.options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: -4px 0 4px;
+    font-size: 14px;
+}
+
+.options-row .remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #475569;
+    cursor: pointer;
+}
+
+.options-row .remember input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #2d6da8;
+    cursor: pointer;
+}
+
+.options-row .forgot {
+    color: #2d6da8;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.options-row .forgot:hover {
+    color: #e67e22;
+    text-decoration: underline;
+}
+
+/* ========== BUTTON ========== */
+.btn {
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #1a4a7a, #2d6da8);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -8px rgba(26, 74, 122, 0.4);
+    background: linear-gradient(135deg, #0f2b4b, #1a4a7a);
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ========== DIVIDER ========== */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 8px 0 12px;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.divider span {
+    font-size: 13px;
+    color: #94a3b8;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* ========== APP PROMO (Quảng cáo app) ========== */
+.app-promo {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 8px 0 4px;
+}
+
+.app-promo .promo-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #475569;
+    background: #f1f5f9;
+    padding: 6px 14px 6px 10px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    cursor: default;
+}
+
+.app-promo .promo-item .promo-icon {
+    font-size: 18px;
+}
+
+.app-promo .promo-item:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    transform: scale(1.03);
+}
+
+/* ========== INFO FOOTER ========== */
+.info {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+.info p {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.info .zalo-link {
+    color: #2d6da8;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+.info .zalo-link:hover {
+    color: #e67e22;
+}
+
+.info .version-badge {
+    background: #e2e8f0;
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #475569;
+    font-weight: 500;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 480px) {
+    .box {
+        padding: 32px 20px 28px;
+        border-radius: 20px;
+    }
+
+    .box h2 {
+        font-size: 24px;
+    }
+
+    .feature-badges {
+        gap: 8px;
+    }
+
+    .feature-badges .badge {
+        font-size: 11px;
+        padding: 4px 12px;
+    }
+
+    .app-promo {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .app-promo .promo-item {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .info {
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+    }
+
+    .options-row {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 380px) {
+    .box {
+        padding: 24px 16px 20px;
+    }
+}
+
+/* ========== SCROLLBAR STYLING ========== */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 10px;
+}

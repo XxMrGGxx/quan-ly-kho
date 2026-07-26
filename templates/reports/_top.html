@@ -1,0 +1,83 @@
+<div class="report-section" id="rpt-top">
+    <div id="top-loading" class="text-center" style="padding:20px;color:#94a3b8"><i>Đang tải thống kê top...</i></div>
+    <div id="top-error" class="text-center" style="display:none"></div>
+    <div id="top-content" style="display:none">
+        <div class="grid grid-cols-2 gap-4">
+            <div class="card">
+                <div class="card-header">Top 5 sản phẩm bán chạy</div>
+                <div class="card-body">
+                    <table class="simple-table">
+                        <thead><tr><th>STT</th><th>Tên SP</th><th>SL</th><th>Doanh thu</th></tr></thead>
+                        <tbody id="top-products-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Top 5 sản phẩm tồn kho cao</div>
+                <div class="card-body">
+                    <table class="simple-table">
+                        <thead><tr><th>STT</th><th>Tên SP</th><th>Tồn kho</th><th>Giá trị</th></tr></thead>
+                        <tbody id="top-stock-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card" style="margin-top:12px;">
+            <div class="card-header">Top nhân viên bán hàng</div>
+            <div class="card-body">
+                <table class="simple-table">
+                    <thead><tr><th>STT</th><th>Nhân viên</th><th>Số đơn</th><th>Doanh thu</th></tr></thead>
+                    <tbody id="top-employees-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function(){
+    var f = window.reportFilters || {};
+    var params = 'start_date='+f.start_date+'&end_date='+f.end_date+(f.warehouse_id?'&warehouse_id='+f.warehouse_id:'')+(f.created_by?'&created_by='+f.created_by:'');
+    window.WMS.api('/reports/top?'+params).then(function(top){
+        document.getElementById('top-loading').style.display='none';
+        document.getElementById('top-content').style.display='';
+        // Top products
+        var pb=document.getElementById('top-products-body');
+        if(top.top_products&&top.top_products.length>0){
+            var rows=[];
+            top.top_products.slice(0,5).forEach(function(p,idx){
+                rows.push('<tr><td data-label="STT">'+(idx+1)+'</td><td data-label="Tên">'+window.WMS.escapeHtml(p.name||'')+'</td><td data-label="SL" style="text-align:right">'+window.WMS.safeNumber(p.qty)+'</td><td data-label="Doanh thu" style="text-align:right">'+window.WMS.formatMoney(p.revenue)+'</td></tr>');
+            });
+            pb.innerHTML=rows.join('');
+        }else{
+            pb.innerHTML='<tr><td colspan="4" style="text-align:center;color:#999;">Không có dữ liệu</td></tr>';
+        }
+        // Top stock
+        var sb=document.getElementById('top-stock-body');
+        if(top.top_stock&&top.top_stock.length>0){
+            var rows=[];
+            top.top_stock.slice(0,5).forEach(function(item,idx){
+                rows.push('<tr><td data-label="STT">'+(idx+1)+'</td><td data-label="Tên">'+window.WMS.escapeHtml(item.name||'')+'</td><td data-label="Tồn" style="text-align:right">'+window.WMS.safeNumber(item.stock_end)+'</td><td data-label="Giá trị" style="text-align:right">'+window.WMS.formatMoney(item.total_value_end)+'</td></tr>');
+            });
+            sb.innerHTML=rows.join('');
+        }else{
+            sb.innerHTML='<tr><td colspan="4" style="text-align:center;color:#999;">Không có dữ liệu</td></tr>';
+        }
+        // Top employees
+        var eb=document.getElementById('top-employees-body');
+        if(top.top_employees&&top.top_employees.length>0){
+            var rows=[];
+            top.top_employees.slice(0,5).forEach(function(emp,idx){
+                rows.push('<tr><td data-label="STT">'+(idx+1)+'</td><td data-label="NV">'+window.WMS.escapeHtml(emp.name||'')+'</td><td data-label="Số đơn" style="text-align:right">'+window.WMS.safeNumber(emp.order_count)+'</td><td data-label="Doanh thu" style="text-align:right">'+window.WMS.formatMoney(emp.revenue)+'</td></tr>');
+            });
+            eb.innerHTML=rows.join('');
+        }else{
+            eb.innerHTML='<tr><td colspan="4" style="text-align:center;color:#999;">Không có dữ liệu</td></tr>';
+        }
+    }).catch(function(e){
+        document.getElementById('top-loading').style.display='none';
+        var err=document.getElementById('top-error');
+        err.style.display='';
+        err.innerHTML='<span style="color:#dc2626">Lỗi tải thống kê: '+e.message+'</span>';
+    });
+})();
+</script>

@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+{% block page_title %}Cấu hình Vị trí Kho{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 320px 1fr; gap: 20px;" class="warehouse-grid">
+    <!-- Cột trái: Danh sách kho -->
+    <div class="card">
+        <div class="card-header">
+            <span>Danh sách Kho</span>
+            <button class="btn btn-primary btn-sm" onclick="showWhModal()">+ Thêm</button>
+        </div>
+        <div class="card-body" id="warehouse-list" style="padding: 0;">
+        </div>
+    </div>
+
+    <!-- Cột phải: Sơ đồ vị trí -->
+    <div class="card">
+        <div class="card-header">
+            <span id="zone-title">Chi tiết Kho & Vị trí</span>
+            <button class="btn btn-primary btn-sm" onclick="showLocModal()">+ Thêm vị trí</button>
+        </div>
+        <div class="card-body">
+            <div id="location-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
+                <p class="muted">Chọn một kho để xem vị trí chi tiết.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa Kho -->
+<div id="whModal" class="modal-overlay">
+    <div class="modal-content" style="width:min(92vw,500px);">
+        <div class="modal-header">
+            <h3 id="whModalTitle">🏭 Thêm kho mới</h3>
+            <button class="modal-close-btn" onclick="closeWhModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <form id="whForm">
+                <div style="display:grid; grid-template-columns:1fr 2fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label>Mã kho <span style="color:red;">*</span></label>
+                        <input type="text" id="wh_code" class="input" placeholder="VD: KHO001" required>
+                    </div>
+                    <div>
+                        <label>Tên kho <span style="color:red;">*</span></label>
+                        <input type="text" id="wh_name" class="input" placeholder="VD: Kho Trung Tâm" required>
+                    </div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Địa chỉ</label>
+                    <input type="text" id="wh_address" class="input" placeholder="Địa chỉ kho...">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label>Số điện thoại</label>
+                    <input type="text" id="wh_phone" class="input" placeholder="Số điện thoại...">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeWhModal()">Hủy</button>
+            <button type="submit" class="btn btn-primary" id="whSubmitBtn" form="whForm">Lưu kho</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentWhId = null;
+let currentWhEditId = null;
+
+async function loadWarehouses() {
+    const res = await window.WMS.api('/warehouses');
+    const list = document.getElementById('warehouse-list');
+    list.innerHTML = '';
+    res.items.forEach(wh => {
+        const div = document.createElement('div');
+        div.className = 'nav-item';
+        div.style.color = 'var(--text)';
+        div.style.margin = '5px';
+        div.style.cursor = 'pointer';
+        div.style.border = '1px solid #eee';
+        div.style.borderRadius = '8px';
+        div.style.padding = '10px 12px';
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+        
+        const infoSpan = document.createElement('span');
+        infoSpan.innerHTML = `<strong>${wh.code}</strong> - ${wh.name}`;
+        div.appendChild(infoSpan);
+        
+        const btnGroup = document.createElement('span');
+        btnGroup.innerHTML = `
+            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();editWarehouse(${wh.id}, '${window.WMS.escapeAttr(wh.code)}', '${window.WMS.escapeAttr(wh.name)}', '${window.WMS.escapeAttr(wh.address||'')}', '${window.WMS.escapeAttr(wh.phone||'')}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteWarehouse(${wh.id})">🗑️</button>
+        `;
+        div.appendChild(btnGroup);
+        
+        div.onclick = () => selectWarehouse(wh.id, wh.name);
+        list.appendChild(div);
+    });
+}
+
+async function selectWarehouse(id, name) {
+    currentWhId = id;
+    document.getElementById('zone-title').innerText = `Vị trí tại: ${name}`;
+    
+    const zones = await window.WMS.api(`/warehouses/zones/${id}`);
+    const grid = document.getElementById('location-grid');
+    grid.innerHTML = '';
+    
+    if (zones.items.length === 0) {
+        grid.innerHTML = '<p>Kho này chưa có khu vực/vị trí nào.</p>';
+        return;
+    }
+
+    const locs = await window.WMS.api(`/warehouses/locations/${zones.items[0].id}`);
+    locs.items.forEach(loc => {
+        grid.innerHTML += `
+            <div class="card" style="padding:10px; border-left: 4px solid var(--primary); margin-bottom:0;">
+                <div style="font-weight:bold;">${loc.code}</div>
+                <div class="text-sm">${loc.name}</div>
+                <div class="text-sm muted">Rack: ${loc.rack || '-'} | Bin: ${loc.bin || '-'}</div>
+                <div style="margin-top:5px;">
+                    <button class="btn btn-sm" onclick="editLoc(${loc.id})">✏️</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteLoc(${loc.id})">🗑️</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function showWhModal(wh = null) {
+    document.getElementById('whForm').reset();
+    
+    if (wh) {
+        document.getElementById('whModalTitle').innerText = '✏️ Sửa kho';
+        document.getElementById('wh_code').value = wh.code;
+        document.getElementById('wh_name').value = wh.name;
+        document.getElementById('wh_address').value = wh.address || '';
+        document.getElementById('wh_phone').value = wh.phone || '';
+        currentWhEditId = wh.id;
+    } else {
+        document.getElementById('whModalTitle').innerText = '🏭 Thêm kho mới';
+        currentWhEditId = null;
+    }
+    window.WMS.openModal('whModal');
+}
+
+function closeWhModal() {
+    window.WMS.closeModal('whModal');
+    currentWhEditId = null;
+}
+
+function editWarehouse(id, code, name, address, phone) {
+    showWhModal({ id, code, name, address, phone });
+}
+
+async function deleteWarehouse(id) {
+    const confirmed = await window.WMS.confirm('Bạn có chắc chắn muốn xóa kho này?');
+    if (confirmed) {
+        try {
+            await window.WMS.api(`/warehouses/${id}`, 'DELETE');
+            window.WMS.showToast('Đã xóa kho');
+            loadWarehouses();
+        } catch (error) {
+            window.WMS.showToast('Lỗi khi xóa kho', true);
+        }
+    }
+}
+
+document.getElementById('whForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const code = document.getElementById('wh_code').value.trim();
+    const name = document.getElementById('wh_name').value.trim();
+    if (!code || !name) {
+        window.WMS.showToast('Vui lòng nhập mã và tên kho', true);
+        return;
+    }
+    
+    const submitBtn = document.getElementById('whSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Đang xử lý...';
+    
+    const whData = {
+        code: code,
+        name: name,
+        address: document.getElementById('wh_address').value,
+        phone: document.getElementById('wh_phone').value
+    };
+    
+    let url = '/warehouses';
+    let method = 'POST';
+    
+    if (currentWhEditId) {
+        url = `/warehouses/${currentWhEditId}`;
+        method = 'PUT';
+    }
+    
+    try {
+        const result = await window.WMS.api(url, method, whData);
+        if (result) {
+            closeWhModal();
+            loadWarehouses();
+            window.WMS.showToast(currentWhEditId ? 'Cập nhật kho thành công' : 'Thêm kho thành công');
+        }
+    } catch (error) {
+        window.WMS.showToast('Lỗi khi lưu kho: ' + (error.message || 'Unknown error'), true);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Lưu kho';
+    }
+});
+
+async function deleteLoc(id) {
+    const confirmed = await window.WMS.confirm('Xóa vị trí này?');
+    if (confirmed) {
+        await window.WMS.api(`/warehouses/locations/${id}`, 'DELETE');
+        if(currentWhId) selectWarehouse(currentWhId, "");
+    }
+}
+
+loadWarehouses();
+</script>
+{% endblock %}

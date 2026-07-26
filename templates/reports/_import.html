@@ -1,0 +1,53 @@
+<div class="report-section" id="rpt-import">
+    <div id="import-loading" class="text-center" style="padding:20px;color:#94a3b8"><i>Đang tải báo cáo nhập hàng...</i></div>
+    <div id="import-error" class="text-center" style="display:none"></div>
+    <div id="import-content" style="display:none">
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Mã phiếu</th>
+                    <th>Ngày nhập</th>
+                    <th>Nhà cung cấp</th>
+                    <th>SL SP</th>
+                    <th>Tổng tiền</th>
+                    <th>Đã thanh toán</th>
+                    <th>Còn nợ</th>
+                </tr>
+            </thead>
+            <tbody id="import-body"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="7" style="text-align:right;font-weight:bold;">Tổng cộng:</td>
+                    <td id="import-total" style="font-weight:bold;">0 đ</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+<script>
+(function(){
+    var f = window.reportFilters || {};
+    var params = 'start_date='+f.start_date+'&end_date='+f.end_date+(f.warehouse_id?'&warehouse_id='+f.warehouse_id:'');
+    window.WMS.api('/reports/import?'+params).then(function(imp){
+        document.getElementById('import-loading').style.display='none';
+        document.getElementById('import-content').style.display='';
+        var body=document.getElementById('import-body');
+        if(imp.orders&&imp.orders.length>0){
+            var rows=[];
+            imp.orders.forEach(function(o,idx){
+                rows.push('<tr><td data-label="STT">'+(idx+1)+'</td><td data-label="Mã">'+window.WMS.escapeHtml(o.code||'')+'</td><td data-label="Ngày">'+(window.WMS.formatDateOnly(o.order_date)||'')+'</td><td data-label="NCC">'+window.WMS.escapeHtml(o.supplier||'')+'</td><td data-label="SL" style="text-align:right">'+window.WMS.safeNumber(o.item_count)+'</td><td data-label="Tổng" style="text-align:right">'+window.WMS.formatMoney(o.final_amount)+'</td><td data-label="TT" style="text-align:right">'+window.WMS.formatMoney(o.paid_amount)+'</td><td data-label="Nợ" style="text-align:right">'+window.WMS.formatMoney(o.debt_amount)+'</td></tr>');
+            });
+            body.innerHTML=rows.join('');
+        }else{
+            body.innerHTML='<tr><td colspan="8" style="text-align:center;color:#999;">Không có dữ liệu</td></tr>';
+        }
+        document.getElementById('import-total').innerText=window.WMS.formatMoney(imp.total_amount||0);
+    }).catch(function(e){
+        document.getElementById('import-loading').style.display='none';
+        var err=document.getElementById('import-error');
+        err.style.display='';
+        err.innerHTML='<span style="color:#dc2626">Lỗi tải dữ liệu nhập hàng: '+e.message+'</span>';
+    });
+})();
+</script>

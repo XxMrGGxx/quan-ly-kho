@@ -1,0 +1,515 @@
+{% extends "base.html" %}
+{% block page_title %}Sales Map{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .map-container {
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 120px);
+        gap: 12px;
+    }
+
+    .map-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        background: var(--surface);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 12px;
+        padding: 12px 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .map-toolbar label {
+        font-weight: 600;
+        font-size: 13px;
+        color: #475569;
+    }
+
+    .map-toolbar select, .map-toolbar input {
+        padding: 6px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 14px;
+        background: #f8fafc;
+    }
+
+    .map-toolbar select:focus, .map-toolbar input:focus {
+        border-color: var(--primary);
+        outline: none;
+    }
+
+    .map-toolbar .btn {
+        padding: 6px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.15s;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+    .btn-primary:hover {
+        opacity: 0.9;
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+    }
+    .btn-secondary:hover {
+        background: #e2e8f0;
+    }
+
+    #map {
+        flex: 1;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+        z-index: 1;
+    }
+
+    .map-legend {
+        position: absolute;
+        bottom: 30px;
+        right: 20px;
+        background: white;
+        padding: 10px 14px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+        font-size: 12px;
+        z-index: 1000;
+        line-height: 1.8;
+    }
+
+    .map-legend .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .map-legend .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .gps-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .gps-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #94a3b8;
+        display: inline-block;
+    }
+    .gps-dot.active {
+        background: #22c55e;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
+    .info-panel {
+        position: absolute;
+        top: 80px;
+        right: 20px;
+        width: 300px;
+        max-height: 400px;
+        overflow-y: auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        z-index: 1000;
+        padding: 12px;
+        display: none;
+    }
+
+    .info-panel.visible {
+        display: block;
+    }
+
+    .info-panel h4 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        color: #1e293b;
+    }
+
+    .info-panel .info-row {
+        font-size: 12px;
+        color: #475569;
+        padding: 4px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .info-panel .info-row:last-child {
+        border-bottom: none;
+    }
+
+    @media (max-width: 768px) {
+        .map-container {
+            height: calc(100vh - 100px);
+        }
+        .map-toolbar {
+            padding: 8px 12px;
+            gap: 8px;
+        }
+        .map-toolbar select, .map-toolbar input {
+            font-size: 13px;
+        }
+        .info-panel {
+            width: 240px;
+            right: 10px;
+            top: 70px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-container">
+    <!-- Toolbar -->
+    <div class="map-toolbar">
+        <div class="gps-status" id="gps-status">
+            <span class="gps-dot" id="gps-dot"></span>
+            <span id="gps-text">Đang tải...</span>
+        </div>
+
+        <div style="flex:1;"></div>
+
+        <label for="user-filter">Nhân viên:</label>
+        <select id="user-filter" style="min-width:160px;">
+            <option value="">-- Tất cả --</option>
+        </select>
+
+        <button class="btn btn-primary" onclick="loadGPSData()">🔄 Làm mới</button>
+        <button class="btn btn-secondary" onclick="fitAllMarkers()">🔍 Fit all</button>
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Info Panel -->
+    <div class="info-panel" id="info-panel">
+        <h4 id="info-title">Thông tin</h4>
+        <div id="info-content"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map;
+let markersLayer;
+let allLogs = [];
+let markerMap = {}; // user_id -> L.marker
+
+// Colors for different users
+const USER_COLORS = [
+    '#2563eb', '#dc2626', '#16a34a', '#d97706',
+    '#7c3aed', '#db2777', '#0891b2', '#65a30d'
+];
+
+function getColor(index) {
+    return USER_COLORS[index % USER_COLORS.length];
+}
+
+function initMap() {
+    // Default center: Vietnam
+    map = L.map('map', {
+        zoomControl: true,
+        attributionControl: false
+    }).setView([14.0583, 108.2772], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+    }).addTo(map);
+
+    markersLayer = L.layerGroup().addTo(map);
+
+    // Load data
+    loadUsers();
+    loadGPSData();
+
+    // Close info panel on map click
+    map.on('click', () => {
+        document.getElementById('info-panel').classList.remove('visible');
+    });
+
+    // Resize map on window resize
+    setTimeout(() => map.invalidateSize(), 300);
+
+    // Request device GPS location to center map on user
+    requestUserLocation();
+
+    // Auto-refresh every 30 seconds
+    setInterval(loadGPSData, 30000);
+
+    // Reload data when filter changes
+    document.getElementById('user-filter').addEventListener('change', loadGPSData);
+}
+
+async function loadUsers() {
+    try {
+        const users = await window.WMS.api('/sales/gps-log/users');
+        const select = document.getElementById('user-filter');
+        select.innerHTML = '<option value="">-- Tất cả --</option>';
+        users.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            opt.textContent = u.full_name + ' (' + u.username + ')';
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('Lỗi tải danh sách user:', e);
+    }
+}
+
+async function loadGPSData() {
+    try {
+        const userId = document.getElementById('user-filter').value;
+
+        let url = '/sales/gps-log/latest-all';
+        if (userId) {
+            // Dùng latest-all với user_id để lấy vị trí mới nhất tuyệt đối
+            url = '/sales/gps-log/latest-all?user_id=' + userId;
+        }
+
+        allLogs = await window.WMS.api(url);
+        renderMarkers();
+        updateGPSStatus();
+    } catch (e) {
+        console.error('Lỗi tải dữ liệu GPS:', e);
+        document.getElementById('gps-text').textContent = 'Lỗi tải dữ liệu';
+    }
+}
+
+function renderMarkers() {
+    markersLayer.clearLayers();
+    markerMap = {};
+
+    if (allLogs.length === 0) {
+        document.getElementById('gps-text').textContent = 'Không có dữ liệu GPS';
+        return;
+    }
+
+    // Group by user, chỉ lấy vị trí mới nhất của mỗi saler
+    const userLatest = {};
+    allLogs.forEach(log => {
+        const uid = log.user_id;
+        if (!userLatest[uid] || new Date(log.created_at) > new Date(userLatest[uid].created_at)) {
+            userLatest[uid] = log;
+        }
+    });
+
+    const userIds = Object.keys(userLatest);
+    let colorIndex = 0;
+
+    userIds.forEach(uid => {
+        const log = userLatest[uid];
+        const color = getColor(colorIndex++);
+        const markerSize = 16;
+
+        const icon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="
+                width: ${markerSize}px;
+                height: ${markerSize}px;
+                background: ${color};
+                border: 3px solid white;
+                border-radius: 50%;
+                box-shadow: 0 0 0 3px ${color}44, 0 2px 8px rgba(0,0,0,0.3);
+            "></div>`,
+            iconSize: [markerSize, markerSize],
+            iconAnchor: [markerSize/2, markerSize/2]
+        });
+
+        const marker = L.marker([log.latitude, log.longitude], { icon })
+            .addTo(markersLayer);
+
+        const time = new Date(log.created_at).toLocaleString('vi-VN');
+        const popupContent = `
+            <div style="font-size:13px; line-height:1.6;">
+                <strong>${window.WMS.escapeHtml(log.full_name)}</strong><br>
+                <span style="color:#64748b;">🕐 ${time}</span><br>
+                <span style="color:#64748b;">📍 ${log.latitude.toFixed(6)}, ${log.longitude.toFixed(6)}</span><br>
+                ${log.address ? '<span>🏠 ' + window.WMS.escapeHtml(log.address) + '</span><br>' : ''}
+                ${log.note ? '<span>📝 ' + window.WMS.escapeHtml(log.note) + '</span><br>' : ''}
+                ${log.accuracy ? '<span style="color:#94a3b8;">Độ chính xác: ±' + log.accuracy.toFixed(1) + 'm</span>' : ''}
+                <br><span style="color:#16a34a;font-weight:600;">📍 Vị trí hiện tại</span>
+            </div>
+        `;
+        marker.bindPopup(popupContent);
+
+        marker.on('click', () => {
+            showInfoPanel(log);
+        });
+
+        markerMap[uid] = marker;
+    });
+
+    // Fit bounds
+    fitAllMarkers();
+}
+
+function fitAllMarkers() {
+    if (Object.keys(markerMap).length === 0) return;
+
+    const bounds = L.latLngBounds();
+    Object.values(markerMap).forEach(marker => {
+        bounds.extend(marker.getLatLng());
+    });
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+}
+
+function showInfoPanel(log) {
+    const panel = document.getElementById('info-panel');
+    panel.classList.add('visible');
+
+    document.getElementById('info-title').textContent = log.full_name;
+
+    const time = new Date(log.created_at).toLocaleString('vi-VN');
+    document.getElementById('info-content').innerHTML = `
+        <div class="info-row"><strong>Nhân viên:</strong> ${window.WMS.escapeHtml(log.full_name)}</div>
+        <div class="info-row"><strong>Thời gian:</strong> ${time}</div>
+        <div class="info-row"><strong>Tọa độ:</strong> ${log.latitude.toFixed(6)}, ${log.longitude.toFixed(6)}</div>
+        ${log.address ? `<div class="info-row"><strong>Địa chỉ:</strong> ${window.WMS.escapeHtml(log.address)}</div>` : ''}
+        ${log.note ? `<div class="info-row"><strong>Ghi chú:</strong> ${window.WMS.escapeHtml(log.note)}</div>` : ''}
+        ${log.accuracy ? `<div class="info-row"><strong>Độ chính xác:</strong> ±${log.accuracy.toFixed(1)}m</div>` : ''}
+    `;
+}
+
+function updateGPSStatus() {
+    const dot = document.getElementById('gps-dot');
+    const text = document.getElementById('gps-text');
+
+    if (allLogs.length > 0) {
+        dot.className = 'gps-dot active';
+        const userCount = allLogs.length;
+        text.textContent = `${userCount} nhân viên đang hoạt động`;
+    } else {
+        dot.className = 'gps-dot';
+        text.textContent = 'Không có dữ liệu';
+    }
+}
+
+// ===== GPS LOCATION REQUEST (for centering map on mobile) =====
+let userMarker = null;
+
+function requestUserLocation() {
+    if (!navigator.geolocation) {
+        document.getElementById('gps-text').textContent = 'Trình duyệt không hỗ trợ GPS';
+        return;
+    }
+
+    // Update status to show we're requesting
+    document.getElementById('gps-text').textContent = 'Đang xin quyền GPS...';
+    document.getElementById('gps-dot').className = 'gps-dot';
+
+    // Request current position - this triggers the browser permission prompt on mobile
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy || 0;
+
+            // Center map on user's location with zoom
+            map.setView([lat, lng], 15);
+
+            // Add a blue dot for user's current location
+            if (userMarker) {
+                map.removeLayer(userMarker);
+            }
+
+            const userIcon = L.divIcon({
+                className: 'user-location-marker',
+                html: `<div style="
+                    width: 20px;
+                    height: 20px;
+                    background: #3b82f6;
+                    border: 3px solid white;
+                    border-radius: 50%;
+                    box-shadow: 0 0 0 4px rgba(59,130,246,0.3), 0 2px 8px rgba(0,0,0,0.3);
+                "></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            userMarker = L.marker([lat, lng], { icon: userIcon })
+                .addTo(map)
+                .bindPopup(`
+                    <div style="font-size:13px; line-height:1.6;">
+                        <strong>📍 Vị trí của bạn</strong><br>
+                        <span style="color:#64748b;">Độ chính xác: ±${accuracy.toFixed(1)}m</span>
+                    </div>
+                `);
+
+            // Draw accuracy circle
+            if (accuracy > 0 && accuracy < 1000) {
+                L.circle([lat, lng], {
+                    radius: accuracy,
+                    color: '#3b82f6',
+                    fillColor: '#3b82f6',
+                    fillOpacity: 0.1,
+                    weight: 1,
+                    opacity: 0.3
+                }).addTo(map);
+            }
+
+            document.getElementById('gps-dot').className = 'gps-dot active';
+            document.getElementById('gps-text').textContent = `📍 Đã định vị (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        },
+        (error) => {
+            console.warn('GPS location error:', error.message);
+            const dot = document.getElementById('gps-dot');
+            const text = document.getElementById('gps-text');
+
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    text.textContent = '⚠️ Quyền GPS bị từ chối';
+                    dot.className = 'gps-dot';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    text.textContent = '⚠️ Không lấy được vị trí';
+                    dot.className = 'gps-dot';
+                    break;
+                case error.TIMEOUT:
+                    text.textContent = '⚠️ Yêu cầu GPS hết thời gian';
+                    dot.className = 'gps-dot';
+                    break;
+                default:
+                    text.textContent = '⚠️ Lỗi GPS: ' + error.message;
+                    dot.className = 'gps-dot';
+            }
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 60000
+        }
+    );
+}
+
+// Init on load
+document.addEventListener('DOMContentLoaded', initMap);
+</script>
+{% endblock %}

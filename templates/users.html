@@ -1,0 +1,836 @@
+{% extends "base.html" %}
+{% block page_title %}Quản lý Người dùng{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <span>Quản lý Người dùng và Vai trò</span>
+        <div>
+            <button class="btn btn-primary" onclick="openUserModal()">+ Thêm người dùng mới</button>
+            <button class="btn btn-secondary" onclick="openPermissionsModal()">⚙️ Phân quyền Vai trò</button>
+        </div>
+    </div>
+<div class="card-body" style="padding:0; overflow-x: auto;">
+         <table class="responsive-table">
+             <thead>
+                 <tr>
+                     <th>Username</th>
+                     <th>Họ & Tên</th>
+                     <th>Email</th>
+                     <th>Điện thoại</th>
+                     <th>Vai trò</th>
+                     <th>Trạng thái</th>
+                     <th>Hành động</th>
+                 </tr>
+             </thead>
+             <tbody id="users-table">
+                 <tr><td colspan="7" style="text-align:center;">Đang tải dữ liệu...</td></tr>
+             </tbody>
+         </table>
+     </div>
+</div>
+
+<!-- Modal Thêm/Sửa người dùng -->
+<div id="userModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:white; width:600px; border-radius:8px; padding:24px; max-height:90vh; overflow-y:auto;">
+        <h3 id="userModalTitle">Thêm người dùng mới</h3>
+        <form id="userForm">
+            <input type="hidden" id="user_id">
+            <div style="margin-bottom:12px;">
+                <label>Username *</label>
+                <input type="text" id="username" class="input" autocomplete="off" required>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Mật khẩu * <span class="text-sm muted" id="password-hint">(Để trống nếu không đổi)</span></label>
+                <input type="password" id="password" class="input" autocomplete="new-password">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Họ & Tên *</label>
+                <input type="text" id="full_name" class="input" required>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Email</label>
+                <input type="email" id="email" class="input">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Điện thoại</label>
+                <input type="text" id="phone" class="input">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Vai trò</label>
+                <select id="role" class="input">
+                    <option value="admin">🔑 Admin - Toàn quyền</option>
+                    <option value="manager">📋 Manager - Quản lý</option>
+                    <option value="staff">👤 Staff - Nhân viên kho</option>
+                    <option value="viewer">👁️ Viewer - Chỉ xem</option>
+                    <option value="saler">💼 Saler - Kinh doanh</option>
+                </select>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Phòng ban</label>
+                <input type="text" id="department" class="input">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Ghi chú</label>
+                <textarea id="notes" class="input" rows="2"></textarea>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label>Hoạt động</label>
+                <input type="checkbox" id="is_active" checked>
+            </div>
+            <div style="margin-bottom:12px;" id="warehouse-assignment-section">
+                <label>Gán kho (để trống nếu admin)</label>
+                <div id="warehouse-checkboxes" style="max-height:200px; overflow-y:auto; border:1px solid #ddd; padding:8px; border-radius:4px;">
+                    Đang tải danh sách kho...
+                </div>
+            </div>
+
+            <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Phân quyền Vai trò - Redesigned -->
+<div id="permissionsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:white; width:960px; border-radius:16px; padding:0; max-height:92vh; overflow-y:auto; box-shadow:0 24px 60px rgba(15,23,42,0.3);">
+        <!-- Header -->
+        <div style="padding:20px 28px; border-bottom:1px solid #e2e8f0; background:linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius:16px 16px 0 0; position:sticky; top:0; z-index:10;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h3 style="margin:0; font-size:18px; font-weight:700; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                        ⚙️ Phân quyền Vai trò
+                    </h3>
+                    <p style="margin:4px 0 0; font-size:13px; color:#64748b;">Cấu hình quyền truy cập cho từng vai trò trong hệ thống</p>
+                </div>
+                <button onclick="closePermissionsModal()" style="width:36px; height:36px; border-radius:10px; border:1px solid #e2e8f0; background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; color:#64748b; transition:all 0.15s;" onmouseover="this.style.background='#fef2f2'; this.style.borderColor='#fecaca'; this.style.color='#ef4444'" onmouseout="this.style.background='white'; this.style.borderColor='#e2e8f0'; this.style.color='#64748b'">✕</button>
+            </div>
+        </div>
+
+        <div style="padding:24px 28px 20px;">
+            <!-- Role Selector with descriptions -->
+            <div style="margin-bottom:24px;">
+                <label style="display:block; font-weight:600; font-size:14px; color:#334155; margin-bottom:10px;">Chọn vai trò để phân quyền</label>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px;" id="role-selector-grid">
+                    <div class="perm-role-card active" data-role="admin" onclick="selectPermRole('admin')" style="cursor:pointer; border:2px solid #2563eb; border-radius:12px; padding:14px 16px; background:#eff6ff; transition:all 0.2s;">
+                        <div style="font-size:20px; margin-bottom:4px;">🔑</div>
+                        <div style="font-weight:700; font-size:14px; color:#0f172a;">Admin</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:2px;">Toàn quyền hệ thống</div>
+                    </div>
+                    <div class="perm-role-card" data-role="manager" onclick="selectPermRole('manager')" style="cursor:pointer; border:2px solid #e2e8f0; border-radius:12px; padding:14px 16px; background:white; transition:all 0.2s;">
+                        <div style="font-size:20px; margin-bottom:4px;">📋</div>
+                        <div style="font-weight:700; font-size:14px; color:#0f172a;">Manager</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:2px;">Quản lý vận hành</div>
+                    </div>
+                    <div class="perm-role-card" data-role="staff" onclick="selectPermRole('staff')" style="cursor:pointer; border:2px solid #e2e8f0; border-radius:12px; padding:14px 16px; background:white; transition:all 0.2s;">
+                        <div style="font-size:20px; margin-bottom:4px;">👤</div>
+                        <div style="font-weight:700; font-size:14px; color:#0f172a;">Staff</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:2px;">Nhân viên kho</div>
+                    </div>
+                    <div class="perm-role-card" data-role="viewer" onclick="selectPermRole('viewer')" style="cursor:pointer; border:2px solid #e2e8f0; border-radius:12px; padding:14px 16px; background:white; transition:all 0.2s;">
+                        <div style="font-size:20px; margin-bottom:4px;">👁️</div>
+                        <div style="font-weight:700; font-size:14px; color:#0f172a;">Viewer</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:2px;">Chỉ xem báo cáo</div>
+                    </div>
+                    <div class="perm-role-card" data-role="saler" onclick="selectPermRole('saler')" style="cursor:pointer; border:2px solid #e2e8f0; border-radius:12px; padding:14px 16px; background:white; transition:all 0.2s;">
+                        <div style="font-size:20px; margin-bottom:4px;">💼</div>
+                        <div style="font-weight:700; font-size:14px; color:#0f172a;">Saler</div>
+                        <div style="font-size:11px; color:#64748b; margin-top:2px;">Kinh doanh</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permissions Table -->
+            <div style="border:1px solid #e2e8f0; border-radius:12px; overflow:hidden;">
+                <!-- Action toolbar -->
+                <div style="padding:12px 16px; background:#f8fafc; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <span style="font-weight:600; font-size:13px; color:#475569;">
+                        <span id="selected-role-name">Admin</span>
+                        <span style="color:#94a3b8; font-weight:400;"> — Chi tiết quyền</span>
+                    </span>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="btn btn-sm btn-secondary" onclick="toggleAllPermissions('view', true)">👁️ Xem tất cả</button>
+                        <button class="btn btn-sm btn-secondary" onclick="toggleAllPermissions('create', true)">➕ Tạo tất cả</button>
+                        <button class="btn btn-sm btn-secondary" onclick="toggleAllPermissions('edit', true)">✏️ Sửa tất cả</button>
+                        <button class="btn btn-sm btn-secondary" onclick="toggleAllPermissions('delete', true)">🗑️ Xóa tất cả</button>
+                        <button class="btn btn-sm btn-secondary" onclick="resetRolePermissions()">🔄 Mặc định</button>
+                    </div>
+                </div>
+
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding:12px 16px; font-size:13px; font-weight:700; color:#334155; background:#f8fafc; border-bottom:2px solid #e2e8f0; min-width:160px;">Module</th>
+                            <th style="padding:12px 8px; font-size:13px; font-weight:700; color:#334155; background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:center; min-width:80px;">
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span>👁️</span>
+                                    <span>Xem</span>
+                                </div>
+                            </th>
+                            <th style="padding:12px 8px; font-size:13px; font-weight:700; color:#334155; background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:center; min-width:80px;">
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span>➕</span>
+                                    <span>Tạo</span>
+                                </div>
+                            </th>
+                            <th style="padding:12px 8px; font-size:13px; font-weight:700; color:#334155; background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:center; min-width:80px;">
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span>✏️</span>
+                                    <span>Sửa</span>
+                                </div>
+                            </th>
+                            <th style="padding:12px 8px; font-size:13px; font-weight:700; color:#334155; background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:center; min-width:80px;">
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span>🗑️</span>
+                                    <span>Xóa</span>
+                                </div>
+                            </th>
+                            <th style="padding:12px 8px; font-size:13px; font-weight:700; color:#334155; background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:center; min-width:80px;">
+                                <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span>📤</span>
+                                    <span>Xuất</span>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="permissions-table">
+                        <!-- Permissions will be loaded here with toggle switches -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding:16px 28px; border-top:1px solid #e2e8f0; background:#f8fafc; border-radius:0 0 16px 16px; display:flex; gap:12px; justify-content:flex-end; position:sticky; bottom:0; z-index:10;">
+            <button type="button" class="btn btn-secondary" onclick="closePermissionsModal()">Đóng</button>
+            <button type="button" class="btn btn-primary" onclick="savePermissions()" style="padding:10px 24px; font-weight:600;">
+                💾 Lưu phân quyền
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Toggle Switch */
+.perm-toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    padding: 0;
+    display: inline-block;
+    flex-shrink: 0;
+}
+.perm-toggle.active {
+    background: #2563eb;
+}
+.perm-toggle.active.success-bg {
+    background: #10b981;
+}
+.perm-toggle.active.danger-bg {
+    background: #ef4444;
+}
+.perm-toggle.active.warning-bg {
+    background: #f59e0b;
+}
+.perm-toggle .toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.perm-toggle.active .toggle-knob {
+    left: 22px;
+}
+.perm-toggle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Role card hover effects */
+.perm-role-card:hover {
+    box-shadow: 0 4px 12px rgba(37,99,235,0.12);
+}
+.perm-role-card.active {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+
+/* Module row grouping */
+.perm-module-row td {
+    padding: 8px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+.perm-module-row:last-child td {
+    border-bottom: none;
+}
+.perm-module-row:hover td {
+    background: #f8fafc;
+}
+.perm-module-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #0f172a;
+}
+.perm-module-desc {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 1px;
+}
+
+/* Module group header */
+.perm-group-header td {
+    padding: 10px 16px 6px;
+    background: #f1f5f9;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Responsive for permissions modal */
+@media (max-width: 768px) {
+    #permissionsModal > div {
+        width: 98vw !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        max-height: 96vh;
+    }
+    #role-selector-grid {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
+        gap: 6px;
+    }
+    .perm-role-card {
+        padding: 10px !important;
+    }
+    .perm-role-card div:first-child {
+        font-size: 16px !important;
+    }
+    .perm-role-card div:nth-child(2) {
+        font-size: 12px !important;
+    }
+    .perm-role-card div:nth-child(3) {
+        font-size: 10px !important;
+    }
+    #permissions-table td {
+        padding: 6px 8px !important;
+    }
+    .perm-module-name {
+        font-size: 12px !important;
+    }
+    .perm-toggle {
+        width: 36px !important;
+        height: 20px !important;
+    }
+    .perm-toggle .toggle-knob {
+        width: 16px !important;
+        height: 16px !important;
+    }
+    .perm-toggle.active .toggle-knob {
+        left: 18px !important;
+    }
+}
+</style>
+
+<script>
+let currentEditingUserId = null;
+let availableModules = [];
+let currentPermRole = 'admin';
+
+// ===== ROLE DESCRIPTIONS & DEFAULT PERMISSIONS =====
+const roleDefaults = {
+    admin: {
+        icon: '🔑',
+        label: 'Admin',
+        desc: 'Toàn quyền hệ thống',
+        modules: {}
+    },
+    manager: {
+        icon: '📋',
+        label: 'Manager',
+        desc: 'Quản lý vận hành',
+        modules: {
+            products: [1,1,1,0,1],
+            customers: [1,1,1,0,1],
+            suppliers: [1,1,1,0,1],
+            inventory: [1,1,1,0,1],
+            import_orders: [1,1,1,0,1],
+            export_orders: [1,1,1,0,1],
+            warehouses: [1,1,1,0,1],
+            reports: [1,0,0,0,1],
+            users: [1,0,0,0,0],
+            settings: [1,0,0,0,0]
+        }
+    },
+    staff: {
+        icon: '👤',
+        label: 'Staff',
+        desc: 'Nhân viên kho',
+        modules: {
+            products: [1,0,0,0,0],
+            customers: [1,1,1,0,0],
+            suppliers: [1,0,0,0,0],
+            inventory: [1,1,0,0,0],
+            import_orders: [1,1,0,0,0],
+            export_orders: [1,1,0,0,0],
+            warehouses: [0,0,0,0,0],
+            reports: [1,0,0,0,0],
+            users: [0,0,0,0,0],
+            settings: [0,0,0,0,0]
+        }
+    },
+    viewer: {
+        icon: '👁️',
+        label: 'Viewer',
+        desc: 'Chỉ xem báo cáo',
+        modules: {
+            products: [1,0,0,0,0],
+            customers: [1,0,0,0,0],
+            suppliers: [1,0,0,0,0],
+            inventory: [1,0,0,0,0],
+            import_orders: [1,0,0,0,0],
+            export_orders: [1,0,0,0,0],
+            warehouses: [1,0,0,0,0],
+            reports: [1,0,0,0,0],
+            users: [0,0,0,0,0],
+            settings: [0,0,0,0,0]
+        }
+    },
+    saler: {
+        icon: '💼',
+        label: 'Saler',
+        desc: 'Kinh doanh',
+        modules: {
+            products: [1,0,0,0,0],
+            customers: [1,1,0,0,0],
+            suppliers: [1,0,0,0,0],
+            inventory: [1,0,0,0,0],
+            import_orders: [0,0,0,0,0],
+            export_orders: [0,0,0,0,0],
+            warehouses: [0,0,0,0,0],
+            reports: [1,0,0,0,0],
+            users: [0,0,0,0,0],
+            settings: [0,0,0,0,0]
+        }
+    }
+};
+
+// Module groups for visual organization
+const moduleGroups = [
+    {
+        name: '📦 Quản lý Hàng hóa',
+        modules: ['products', 'inventory']
+    },
+    {
+        name: '🤝 Đối tác',
+        modules: ['customers', 'suppliers']
+    },
+    {
+        name: '📥 Nhập/Xuất kho',
+        modules: ['import_orders', 'export_orders']
+    },
+    {
+        name: '🏭 Kho bãi & Báo cáo',
+        modules: ['warehouses', 'reports']
+    },
+    {
+        name: '⚙️ Hệ thống',
+        modules: ['users', 'settings']
+    }
+];
+
+// Module name mapping
+const moduleNames = {
+    products: 'Hàng hóa',
+    customers: 'Khách hàng',
+    suppliers: 'Nhà cung cấp',
+    inventory: 'Tồn kho',
+    import_orders: 'Nhập kho',
+    export_orders: 'Xuất kho',
+    warehouses: 'Quản lý Kho',
+    reports: 'Báo cáo',
+    users: 'Người dùng',
+    settings: 'Cài đặt'
+};
+
+const moduleDescriptions = {
+    products: 'Sản phẩm, danh mục, đơn vị tính',
+    customers: 'Thông tin khách hàng',
+    suppliers: 'Nhà cung cấp, công nợ',
+    inventory: 'Số lượng tồn kho, điều chỉnh',
+    import_orders: 'Phiếu nhập kho',
+    export_orders: 'Phiếu xuất kho',
+    warehouses: 'Kho, khu vực, vị trí',
+    reports: 'Báo cáo thống kê',
+    users: 'Tài khoản người dùng',
+    settings: 'Cấu hình hệ thống'
+};
+
+// ===== USER MANAGEMENT =====
+
+async function loadUsers() {
+    const res = await window.WMS.api('/auth/users');
+    const tbody = document.getElementById('users-table');
+    tbody.innerHTML = '';
+    if (res && res.items) {
+        res.items.forEach(user => {
+            tbody.innerHTML += `
+                <tr>
+                    <td data-label="Username">${window.WMS.escapeHtml(user.username)}</td>
+                    <td data-label="Họ & Tên">${window.WMS.escapeHtml(user.full_name || '-')}</td>
+                    <td data-label="Email">${window.WMS.escapeHtml(user.email || '-')}</td>
+                    <td data-label="Điện thoại">${window.WMS.escapeHtml(user.phone || '-')}</td>
+                    <td data-label="Vai trò"><span class="badge badge-info">${getRoleDisplay(user.role)}</span></td>
+                    <td data-label="Trạng thái"><span class="badge ${user.is_active ? 'badge-success' : 'badge-danger'}">${user.is_active ? 'Hoạt động' : 'Tạm khóa'}</span></td>
+                    <td data-label="Hành động">
+                        <button class="btn btn-secondary btn-sm" onclick='openUserModal(${JSON.stringify(user).replace(/'/g, "'")})'>✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.id})">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+}
+
+function getRoleDisplay(role) {
+    const icons = { admin: '🔑', manager: '📋', staff: '👤', viewer: '👁️', saler: '💼' };
+    const labels = { admin: 'Admin', manager: 'Manager', staff: 'Staff', viewer: 'Viewer', saler: 'Saler' };
+    return (icons[role] || '') + ' ' + (labels[role] || role);
+}
+
+let availableWarehouses = [];
+
+async function loadWarehouses() {
+    try {
+        const res = await window.WMS.api('/warehouses');
+        availableWarehouses = res.items || [];
+        return availableWarehouses;
+    } catch (e) {
+        availableWarehouses = [];
+        return [];
+    }
+}
+
+function renderWarehouseCheckboxes(selectedIds = []) {
+    const container = document.getElementById('warehouse-checkboxes');
+    if (!container) return;
+    if (availableWarehouses.length === 0) {
+        container.innerHTML = 'Không có kho nào';
+        return;
+    }
+    container.innerHTML = availableWarehouses.map(wh => `
+        <label style="display:block; margin:4px 0;">
+            <input type="checkbox" class="warehouse-checkbox" value="${wh.id}" ${selectedIds.includes(wh.id) ? 'checked' : ''}>
+            ${window.WMS.escapeHtml(wh.name || wh.code)}
+        </label>
+    `).join('');
+}
+
+function getSelectedWarehouseIds() {
+    const checkboxes = document.querySelectorAll('.warehouse-checkbox:checked');
+    return Array.from(checkboxes).map(cb => parseInt(cb.value));
+}
+
+function openUserModal(user = null) {
+    currentEditingUserId = user ? user.id : null;
+    document.getElementById('userModalTitle').innerText = user ? 'Cập nhật người dùng' : 'Thêm người dùng mới';
+    document.getElementById('password-hint').style.display = user ? 'inline' : 'none';
+    
+    document.getElementById('user_id').value = user ? user.id : '';
+    document.getElementById('username').value = user ? user.username : '';
+    document.getElementById('username').disabled = !!user;
+    document.getElementById('password').value = '';
+    document.getElementById('password').required = !user;
+    document.getElementById('full_name').value = user ? user.full_name : '';
+    document.getElementById('email').value = user ? user.email : '';
+    document.getElementById('phone').value = user ? user.phone : '';
+    document.getElementById('role').value = user ? user.role : 'staff';
+    document.getElementById('department').value = user ? user.department : '';
+    document.getElementById('notes').value = user ? user.notes : '';
+    document.getElementById('is_active').checked = user ? !!user.is_active : true;
+    
+    const whSection = document.getElementById('warehouse-assignment-section');
+    if (user && user.role === 'admin') {
+        whSection.style.display = 'none';
+    } else {
+        whSection.style.display = 'block';
+    }
+
+    loadWarehouses().then(() => {
+        let selectedWhIds = [];
+        if (user && user.warehouse_ids) {
+            selectedWhIds = user.warehouse_ids;
+        } else if (user && user.warehouse_id) {
+            selectedWhIds = [user.warehouse_id];
+        }
+        renderWarehouseCheckboxes(selectedWhIds);
+    });
+    
+    document.getElementById('userModal').style.display = 'block';
+}
+
+function closeUserModal() {
+    document.getElementById('userModal').style.display = 'none';
+}
+
+document.getElementById('userForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const userData = {
+        full_name: document.getElementById('full_name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        role: document.getElementById('role').value,
+        department: document.getElementById('department').value,
+        notes: document.getElementById('notes').value,
+        is_active: document.getElementById('is_active').checked ? 1 : 0,
+        warehouse_ids: getSelectedWarehouseIds()
+    };
+    
+    const password = document.getElementById('password').value;
+    
+    try {
+        if (currentEditingUserId) {
+            await window.WMS.api(`/auth/users/${currentEditingUserId}`, 'PUT', userData);
+            if (password) {
+                await window.WMS.api(`/auth/users/${currentEditingUserId}/reset-password`, 'POST', { new_password: password });
+            }
+        } else {
+            userData.username = document.getElementById('username').value;
+            userData.password = password;
+            await window.WMS.api('/auth/users', 'POST', userData);
+        }
+        closeUserModal();
+        loadUsers();
+    } catch (err) {
+        window.WMS.toast.error('Lỗi', err.message);
+    }
+};
+
+async function deleteUser(id) {
+    if (confirm('Xác nhận vô hiệu hóa người dùng này?')) {
+        try {
+            await window.WMS.api(`/auth/users/${id}`, 'DELETE');
+            loadUsers();
+        } catch (err) {
+            window.WMS.toast.error('Lỗi', err.message);
+        }
+    }
+}
+
+// ===== PERMISSIONS MANAGEMENT (Redesigned) =====
+
+async function openPermissionsModal() {
+    const res = await window.WMS.api('/auth/modules');
+    availableModules = res.modules;
+    document.getElementById('permissionsModal').style.display = 'block';
+    currentPermRole = 'admin';
+    selectPermRole('admin');
+}
+
+function closePermissionsModal() {
+    document.getElementById('permissionsModal').style.display = 'none';
+}
+
+function selectPermRole(role) {
+    currentPermRole = role;
+    
+    // Update role cards
+    document.querySelectorAll('.perm-role-card').forEach(card => {
+        card.classList.remove('active');
+        card.style.borderColor = '#e2e8f0';
+        card.style.background = 'white';
+        if (card.dataset.role === role) {
+            card.classList.add('active');
+            card.style.borderColor = '#2563eb';
+            card.style.background = '#eff6ff';
+        }
+    });
+    
+    // Update selected role name
+    const info = roleDefaults[role] || {};
+    document.getElementById('selected-role-name').textContent = info.label || role;
+    
+    // Load permissions for this role
+    loadRolePermissions(role);
+}
+
+async function loadRolePermissions(role) {
+    try {
+        const res = await window.WMS.api(`/auth/permissions/${role}`);
+        const table = document.getElementById('permissions-table');
+        table.innerHTML = '';
+        
+        const permsMap = {};
+        // If admin, auto-set all permissions
+        if (role === 'admin') {
+            res.permissions.forEach(p => permsMap[p.module] = { can_view: 1, can_create: 1, can_edit: 1, can_delete: 1, can_export: 1 });
+        } else {
+            res.permissions.forEach(p => permsMap[p.module] = p);
+        }
+        
+        // Render modules grouped
+        moduleGroups.forEach(group => {
+            // Group header row
+            table.innerHTML += `
+                <tr class="perm-group-header">
+                    <td colspan="6">${group.name}</td>
+                </tr>
+            `;
+            
+            group.modules.forEach(modId => {
+                const mod = availableModules.find(m => m.id === modId);
+                if (!mod) return;
+                
+                const p = permsMap[modId] || { can_view: 0, can_create: 0, can_edit: 0, can_delete: 0, can_export: 0 };
+                const isAdmin = role === 'admin';
+                
+                table.innerHTML += `
+                    <tr class="perm-module-row" data-module="${modId}">
+                        <td style="padding:10px 16px;">
+                            <div class="perm-module-name">${mod.name}</div>
+                            <div class="perm-module-desc">${moduleDescriptions[modId] || ''}</div>
+                        </td>
+                        <td style="text-align:center; padding:10px 8px;">
+                            <button class="perm-toggle ${p.can_view ? 'active success-bg' : ''}" 
+                                    onclick="togglePerm(this, '${modId}', 'can_view')"
+                                    ${isAdmin ? 'disabled' : ''}>
+                                <span class="toggle-knob"></span>
+                            </button>
+                        </td>
+                        <td style="text-align:center; padding:10px 8px;">
+                            <button class="perm-toggle ${p.can_create ? 'active' : ''}" 
+                                    onclick="togglePerm(this, '${modId}', 'can_create')"
+                                    ${isAdmin ? 'disabled' : ''}>
+                                <span class="toggle-knob"></span>
+                            </button>
+                        </td>
+                        <td style="text-align:center; padding:10px 8px;">
+                            <button class="perm-toggle ${p.can_edit ? 'active warning-bg' : ''}" 
+                                    onclick="togglePerm(this, '${modId}', 'can_edit')"
+                                    ${isAdmin ? 'disabled' : ''}>
+                                <span class="toggle-knob"></span>
+                            </button>
+                        </td>
+                        <td style="text-align:center; padding:10px 8px;">
+                            <button class="perm-toggle ${p.can_delete ? 'active danger-bg' : ''}" 
+                                    onclick="togglePerm(this, '${modId}', 'can_delete')"
+                                    ${isAdmin ? 'disabled' : ''}>
+                                <span class="toggle-knob"></span>
+                            </button>
+                        </td>
+                        <td style="text-align:center; padding:10px 8px;">
+                            <button class="perm-toggle ${p.can_export ? 'active' : ''}" 
+                                    onclick="togglePerm(this, '${modId}', 'can_export')"
+                                    ${isAdmin ? 'disabled' : ''}>
+                                <span class="toggle-knob"></span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        });
+    } catch (err) {
+        window.WMS.toast.error('Lỗi', err.message);
+    }
+}
+
+function togglePerm(btn, module, field) {
+    btn.classList.toggle('active');
+    // Color code the toggle
+    if (field === 'can_view') {
+        btn.classList.toggle('success-bg');
+    } else if (field === 'can_edit') {
+        btn.classList.toggle('warning-bg');
+    } else if (field === 'can_delete') {
+        btn.classList.toggle('danger-bg');
+    }
+}
+
+function getToggleState(module, field) {
+    const row = document.querySelector(`#permissions-table tr[data-module="${module}"]`);
+    if (!row) return 0;
+    const toggles = row.querySelectorAll('.perm-toggle');
+    const fieldIndex = { can_view: 0, can_create: 1, can_edit: 2, can_delete: 3, can_export: 4 };
+    const idx = fieldIndex[field];
+    if (idx === undefined || !toggles[idx]) return 0;
+    return toggles[idx].classList.contains('active') ? 1 : 0;
+}
+
+function toggleAllPermissions(field, value) {
+    const adminRow = document.querySelector('#permissions-table .perm-group-header');
+    if (currentPermRole === 'admin') return;
+    
+    const toggles = document.querySelectorAll('#permissions-table .perm-module-row .perm-toggle');
+    const fieldIndex = { view: 0, create: 1, edit: 2, delete: 3, export: 4 };
+    const idx = fieldIndex[field];
+    if (idx === undefined) return;
+    
+    toggles.forEach((toggle, i) => {
+        if (i % 5 === idx) {
+            if (value) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+            // Apply color coding
+            toggle.classList.remove('success-bg', 'warning-bg', 'danger-bg');
+            if (field === 'view') toggle.classList.add('success-bg');
+            else if (field === 'edit') toggle.classList.add('warning-bg');
+            else if (field === 'delete') toggle.classList.add('danger-bg');
+        }
+    });
+}
+
+function resetRolePermissions() {
+    if (currentPermRole === 'admin') return;
+    loadRolePermissions(currentPermRole);
+}
+
+async function savePermissions() {
+    if (currentPermRole === 'admin') {
+        window.WMS.toast.warning('Thông báo', 'Admin luôn có toàn quyền, không cần cấu hình.');
+        return;
+    }
+    
+    const permissions = {};
+    
+    document.querySelectorAll('#permissions-table .perm-module-row').forEach(row => {
+        const mod = row.dataset.module;
+        const toggles = row.querySelectorAll('.perm-toggle');
+        if (toggles.length >= 5) {
+            permissions[mod] = {
+                can_view: toggles[0].classList.contains('active') ? 1 : 0,
+                can_create: toggles[1].classList.contains('active') ? 1 : 0,
+                can_edit: toggles[2].classList.contains('active') ? 1 : 0,
+                can_delete: toggles[3].classList.contains('active') ? 1 : 0,
+                can_export: toggles[4].classList.contains('active') ? 1 : 0
+            };
+        }
+    });
+    
+    try {
+        await window.WMS.api(`/auth/permissions/${currentPermRole}`, 'PUT', { permissions });
+        window.WMS.toast.success('✅ Cập nhật quyền cho ' + (roleDefaults[currentPermRole]?.label || currentPermRole) + ' thành công');
+    } catch (err) {
+        window.WMS.toast.error('Lỗi', err.message);
+    }
+}
+
+loadUsers();
+</script>
+{% endblock %}

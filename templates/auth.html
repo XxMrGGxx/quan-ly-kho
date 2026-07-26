@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Đăng nhập - An Tín WMS</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+</head>
+<body>
+    <div class="box">
+        <!-- Logo & Brand -->
+        <div class="logo">📦</div>
+        <h2>An Tín WMS</h2>
+        <p class="subtitle">Giải pháp quản lý kho hàng <span>thông minh</span></p>
+
+
+        <!-- Message -->
+        <div id="msg" class="msg"></div>
+
+        <!-- Login Form -->
+        <form id="loginForm">
+            <div class="input-group">
+                <label for="username">
+                    <span class="label-icon">👤</span> Tên đăng nhập
+                </label>
+                <input type="text" id="username" placeholder="Nhập tên đăng nhập" autocomplete="username" required autofocus>
+            </div>
+            <div class="input-group">
+                <label for="password">
+                    <span class="label-icon">🔒</span> Mật khẩu
+                </label>
+                <input type="password" id="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required>
+            </div>
+
+            
+            <button type="submit" class="btn">Đăng nhập</button>
+
+            
+        </form>
+
+        <!-- Footer Info -->
+        <div class="info">
+            <p>
+                <span>📞</span> Liên hệ: <a href="#" class="zalo-link">0344 53 68 62</a>
+            </p>
+            <span class="version-badge">v5.1.7</span>
+        </div>
+    </div>
+
+    <script src="/static/js/auth.js"></script>
+</body>
+</html>
